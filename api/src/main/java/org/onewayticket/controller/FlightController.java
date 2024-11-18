@@ -2,7 +2,6 @@ package org.onewayticket.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.onewayticket.dto.FlightDto;
-import org.onewayticket.dto.FlightSearchDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
