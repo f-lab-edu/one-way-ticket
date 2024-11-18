@@ -29,4 +29,5 @@ public record BookingDetailsDto(
         // 결제 정보
         BigDecimal totalAmount,                 // 총 결제 금액
         String paymentStatus                    // 결제 상태
-) {}
+) {
+}
