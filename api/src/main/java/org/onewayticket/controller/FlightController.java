@@ -50,28 +50,53 @@ public class FlightController {
                 .toList());
     }
 
+    // 검색결과 보여줄 필터 추가
     @GetMapping("/search")
     public ResponseEntity<List<FlightDto>> searchFlights(
             @RequestParam("departure") String departure,
             @RequestParam("destination") String destination,
             @RequestParam("departureDate") String departureDate,
-            @RequestParam("numberOfPassengers") Integer numberOfPassengers) {
+            @RequestParam("numberOfPassengers") Integer numberOfPassengers,
+            @RequestParam(value = "sort", defaultValue = "price") String sort) {
+
         // 출발지와 목적지가 같은 경우
         if (departure.equalsIgnoreCase(destination)) {
             return ResponseEntity.badRequest().body(List.of());
         }
 
-        // 예제 데이터 반환
-        return ResponseEntity.ok(List.of(
+        // 예제 데이터 생성
+        List<FlightDto> flights = List.of(
+                new FlightDto("FL001", BigDecimal.valueOf(50), LocalDateTime.now(), departure, destination,
+                        LocalDateTime.now().plusHours(2), LocalDateTime.now().plusHours(4), Duration.ofHours(2)),
+                new FlightDto("FL002", BigDecimal.valueOf(70), LocalDateTime.now(), departure, destination,
+                        LocalDateTime.now().plusHours(3), LocalDateTime.now().plusHours(5), Duration.ofHours(2)),
                 new FlightDto("FL003", BigDecimal.valueOf(120), LocalDateTime.now(), departure, destination,
-                        LocalDateTime.now().plusHours(2), LocalDateTime.now().plusHours(4), Duration.ofHours(2))
-        ));
+                        LocalDateTime.now().plusHours(4), LocalDateTime.now().plusHours(6), Duration.ofHours(2))
+        );
+
+        // 정렬 로직 추가
+        List<FlightDto> sortedFlights = flights.stream()
+                .sorted((f1, f2) -> {
+                    switch (sort) {
+                        case "price":
+                        default:
+                            return f1.price().compareTo(f2.price());
+                        case "arrivalTime":
+                            return f1.arrivalTime().compareTo(f2.arrivalTime());
+                        case "flightDuration":
+                            return f1.flightDuration().compareTo(f2.flightDuration());
+
+                    }
+                })
+                .toList();
+
+        return ResponseEntity.ok(sortedFlights);
     }
 
 
     @GetMapping("/{flightId}")
     public ResponseEntity<FlightDto> getFlightDetails(@PathVariable String flightId) {
-        if (flightId.length() > 50) { // 예제: ID가 50자를 초과하면 오류 반환
+        if (flightId.length() > 50) { // flightId 유효성 검사
             return ResponseEntity.badRequest().build();
         }
 

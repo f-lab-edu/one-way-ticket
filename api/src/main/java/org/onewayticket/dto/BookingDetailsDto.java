@@ -6,9 +6,9 @@ import java.time.LocalDate;
 public record BookingDetailsDto(
         // 기본 예약 정보
         String bookingId,                       // 예약 ID
-        String reservationName,                 // 예약자 이름
-        String reservationEmail,                // 예약자 이메일
-        String reservationPhoneNumber,          // 예약자 전화번호
+        String bookingName,                 // 예약자 이름
+        String bookingEmail,                // 예약자 이메일
+        String bookingPhoneNumber,          // 예약자 전화번호
 
         // 항공편 정보
         String flightId,                        // 항공편 ID
@@ -19,6 +19,7 @@ public record BookingDetailsDto(
 
         // 탑승자 정보
         String passengerName,                   // 탑승자 이름
+        LocalDate passengerBirthDate,           // 탑승자 생년월일
         int passengerAge,                       // 탑승자 나이
         String passengerGender,                 // 탑승자 성별
         String passengerPassportNumber,         // 여권 번호
