@@ -3,6 +3,8 @@ package org.onewayticket.controller;
 import lombok.RequiredArgsConstructor;
 import org.onewayticket.dto.BookingDetailsDto;
 import org.onewayticket.dto.BookingRequestDto;
+import org.onewayticket.dto.FlightDto;
+import org.onewayticket.dto.PassengerDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,8 +18,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,35 +32,67 @@ public class BookingController {
     // 예약 생성
     @PostMapping
     public ResponseEntity<BookingDetailsDto> createBooking(@RequestBody BookingRequestDto bookingRequestInfo) {
+
+        // 결제 정보 검증
         if (bookingRequestInfo.paymentId() == null || bookingRequestInfo.paymentId().isBlank() || !bookingRequestInfo.paymentId().equals("Confirmed")) {
             return ResponseEntity.status(400).build();
         }
 
-        return ResponseEntity.ok(new BookingDetailsDto("A1234", bookingRequestInfo.bookingName(), bookingRequestInfo.bookingEmail(), bookingRequestInfo.bookingPhoneNumber(),
-                bookingRequestInfo.flightId(), "ICN", "NRT", LocalDate.of(2023, 12, 1), LocalDate.of(2023, 12, 1), "Jane Doe",
-                LocalDate.parse(bookingRequestInfo.birthDate()), 25, "Female", "AB123456", "Korean", "12A", "Economy", BigDecimal.valueOf(500), "Confirmed"));
+        // 항공편 정보 생성
+        FlightDto flightDto = new FlightDto(
+                123L, "FL123", BigDecimal.valueOf(500),
+                LocalDateTime.of(2023, 12, 1, 8, 0),
+                LocalDateTime.of(2023, 12, 1, 10, 0),
+                "ICN", "NRT",
+                Duration.ofHours(2), "Korean Air");
+
+        // 탑승자 정보 생성
+        List<PassengerDto> passengerDtoList = List.of(
+                new PassengerDto("John", "Doe",
+                        "1995-05-26",
+                        "12A")
+        );
+
+        // BookingDetailsDto 반환
+        BookingDetailsDto bookingDetailsDto = new BookingDetailsDto(
+                "A1234", // 예약 번호
+                bookingRequestInfo.bookingEmail(),
+                flightDto,
+                passengerDtoList
+        );
+
+        return ResponseEntity.ok(bookingDetailsDto);
     }
 
     @GetMapping
     public ResponseEntity<BookingDetailsDto> getBookingDetails(
-            @RequestParam("bookingId") String bookingId,
-            @RequestParam("name") String name,
-            @RequestParam("birthDate") String birthDate) {
+            @RequestParam("referenceCode") String referenceCode,
+            @RequestParam("bookingEmail") String bookingEmail) {
 
-        // 날짜 유효성 검증
-        if (!isValidDate(birthDate)) {
-            return ResponseEntity.badRequest().body(null);
-        }
 
-        // 미리 정의된 예약 정보
+        FlightDto flightDto = new FlightDto(123L,
+                "FL123", BigDecimal.valueOf(500),
+                LocalDateTime.of(2023, 12, 1, 8, 0),
+                LocalDateTime.of(2023, 12, 1, 10, 0),
+                "ICN", "NRT",
+                Duration.ofHours(2), "Korean Air");
+
+        List<PassengerDto> passengerDtoList = List.of(
+                new PassengerDto(
+                        "John", "Doe",
+                        "1995-05-26",
+                        "12A")
+        );
+
         BookingDetailsDto bookingDetails = new BookingDetailsDto(
-                "B1234", "John Doe", "john.doe@example.com", "123456789",
-                "FL123", "ICN", "NRT", LocalDate.of(2023, 12, 1), LocalDate.of(2023, 12, 1),
-                name, LocalDate.parse(birthDate), 25, "Female", "AB123456", "Korean", "12A", "Economy",
-                BigDecimal.valueOf(500), "Confirmed");
+                "B1234", // 예약 번호
+                bookingEmail,
+                flightDto,
+                passengerDtoList
+        );
 
         // bookingId가 일치하지 않을 경우 예외 처리
-        if (!bookingDetails.bookingId().equals(bookingId)) {
+        if (!bookingDetails.referenceCode().equals(referenceCode)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
 
@@ -78,16 +115,6 @@ public class BookingController {
         return ResponseEntity.ok("Booking with ID " + id + " has been canceled successfully.");
     }
 
-
-    // 오늘 이후 날짜이거나 입력 값이 맞는지 확인
-    private boolean isValidDate(String date) {
-        try {
-            LocalDate parsedDate = LocalDate.parse(date); // 기본 포맷 yyyy-MM-dd
-            return !parsedDate.isAfter(LocalDate.now()); // 오늘 이후 날짜인지 확인
-        } catch (DateTimeParseException e) {
-            return false; // 형식이 잘못된 경우 false 반환
-        }
-    }
 
 
 }

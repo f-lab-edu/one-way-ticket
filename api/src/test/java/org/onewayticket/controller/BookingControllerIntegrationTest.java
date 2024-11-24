@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.onewayticket.dto.BookingDetailsDto;
 import org.onewayticket.dto.BookingRequestDto;
+import org.onewayticket.dto.PassengerDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -14,6 +15,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -41,8 +44,10 @@ class BookingControllerIntegrationTest {
         // Given
         String url = baseUrl + "/api/v1/bookings";
         BookingRequestDto request = new BookingRequestDto(
-                "John Doe", "john.doe@example.com", "123456789", "FL123", "1995-05-01"
-                , "Confirmed"
+                "john.doe@example.com",
+                List.of(new PassengerDto("John", "Doe", "1995-05-01", "12A")), // 탑승자 정보
+                "FL123", // 항공편명
+                "Confirmed" // 결제 ID
         );
 
         // When
@@ -51,7 +56,7 @@ class BookingControllerIntegrationTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals("John Doe", response.getBody().bookingName());
+        assertEquals( "john.doe@example.com", response.getBody().bookingEmail());
     }
 
     @Test
@@ -60,8 +65,10 @@ class BookingControllerIntegrationTest {
         // Given
         String url = baseUrl + "/api/v1/bookings";
         BookingRequestDto request = new BookingRequestDto(
-                "John Doe", "john.doe@example.com", "123456789", "FL123",
-                "1995-05-01", "INVALID*ID"  // 유효하지 않은 결제 ID
+                "john.doe@example.com",
+                List.of(new PassengerDto("John", "Doe", "1995-05-01", "12A")), // 탑승자 정보
+                "FL123", // 항공편명
+                "INVALID*ID"  // 유효하지 않은 결제 ID
         );
 
         // When
@@ -70,12 +77,11 @@ class BookingControllerIntegrationTest {
         // Then
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
-
     @Test
-    @DisplayName("기존 예약 고객은 예약번호, 이름, 생년월일을 통해 예약정보를 조회할 수 있습니다.")
+    @DisplayName("기존 예약 고객은 예약번호, 이메일, 항공편 정보를 통해 예약정보를 조회할 수 있습니다.")
     void Get_bookingDetails_with_valid_info() {
         // Given
-        String url = baseUrl + "/api/v1/bookings?bookingId=B1234&name=John Doe&birthDate=1995-05-01";
+        String url = baseUrl + "/api/v1/bookings?referenceCode=B1234&bookingEmail=\"john.doe@example.com\"";
 
         // When
         ResponseEntity<BookingDetailsDto> response = restTemplate.getForEntity(url, BookingDetailsDto.class);
@@ -83,15 +89,14 @@ class BookingControllerIntegrationTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals("B1234", response.getBody().bookingId());
-        assertEquals("John Doe", response.getBody().passengerName());
+        assertEquals("B1234", response.getBody().referenceCode());
     }
 
     @Test
     @DisplayName("존재하지 않는 예약 정보로 조회할 때는 404를 반환합니다.")
     void Get_bookingDetails_with_invalid_info_not_found() {
         // Given
-        String url = baseUrl + "/api/v1/bookings?bookingId=B9999&name=John Smith&birthDate=1980-01-01";
+        String url = baseUrl + "?referenceCode=B12345&bookingEmail=\"john.doe@example.com\"";
 
         // When
         ResponseEntity<Void> response = restTemplate.getForEntity(url, Void.class);

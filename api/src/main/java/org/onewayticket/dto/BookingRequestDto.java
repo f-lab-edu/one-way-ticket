@@ -1,11 +1,11 @@
 package org.onewayticket.dto;
 
+import java.util.List;
+
 public record BookingRequestDto(
-        String bookingName,
         String bookingEmail,
-        String bookingPhoneNumber,
-        String flightId, // 항공편명
-        String birthDate,
+        List<PassengerDto> passengers,
+        String flightNumber, // 항공편명
         String paymentId // 결제 id
 ) {
 }

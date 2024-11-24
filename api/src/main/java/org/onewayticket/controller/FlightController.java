@@ -23,29 +23,48 @@ public class FlightController {
     public ResponseEntity<List<FlightDto>> getCheapestFlights() {
         // 더미 데이터 9개 생성
         List<FlightDto> flights = List.of(
-                new FlightDto("FL001", BigDecimal.valueOf(50), LocalDateTime.now(), "ICN", "NRT",
-                        LocalDateTime.now().plusHours(2), LocalDateTime.now().plusHours(4), Duration.ofHours(2)),
-                new FlightDto("FL002", BigDecimal.valueOf(70), LocalDateTime.now(), "ICN", "HND",
-                        LocalDateTime.now().plusHours(3), LocalDateTime.now().plusHours(5), Duration.ofHours(2)),
-                new FlightDto("FL003", BigDecimal.valueOf(80), LocalDateTime.now(), "ICN", "KIX",
-                        LocalDateTime.now().plusHours(4), LocalDateTime.now().plusHours(6), Duration.ofHours(2)),
-                new FlightDto("FL004", BigDecimal.valueOf(100), LocalDateTime.now(), "ICN", "LAX",
-                        LocalDateTime.now().plusHours(5), LocalDateTime.now().plusHours(16), Duration.ofHours(11)),
-                new FlightDto("FL005", BigDecimal.valueOf(120), LocalDateTime.now(), "ICN", "JFK",
-                        LocalDateTime.now().plusHours(6), LocalDateTime.now().plusHours(20), Duration.ofHours(14)),
-                new FlightDto("FL006", BigDecimal.valueOf(150), LocalDateTime.now(), "ICN", "CDG",
-                        LocalDateTime.now().plusHours(7), LocalDateTime.now().plusHours(19), Duration.ofHours(12)),
-                new FlightDto("FL007", BigDecimal.valueOf(200), LocalDateTime.now(), "ICN", "SYD",
-                        LocalDateTime.now().plusHours(8), LocalDateTime.now().plusHours(18), Duration.ofHours(10)),
-                new FlightDto("FL008", BigDecimal.valueOf(300), LocalDateTime.now(), "ICN", "FRA",
-                        LocalDateTime.now().plusHours(9), LocalDateTime.now().plusHours(22), Duration.ofHours(13)),
-                new FlightDto("FL009", BigDecimal.valueOf(350), LocalDateTime.now(), "ICN", "SIN",
-                        LocalDateTime.now().plusHours(10), LocalDateTime.now().plusHours(16), Duration.ofHours(6))
+                new FlightDto(1L, "FL001", BigDecimal.valueOf(50),
+                        LocalDateTime.of(2024, 11, 24, 8, 0), // 출발 시간
+                        LocalDateTime.of(2024, 11, 24, 10, 0), // 도착 시간
+                        "ICN", "NRT", Duration.ofHours(2), "Korean Air"),
+                new FlightDto(2L, "FL002", BigDecimal.valueOf(70),
+                        LocalDateTime.of(2024, 11, 24, 9, 0),
+                        LocalDateTime.of(2024, 11, 24, 11, 0),
+                        "ICN", "HND", Duration.ofHours(2), "Asiana Airlines"),
+                new FlightDto(3L, "FL003", BigDecimal.valueOf(80),
+                        LocalDateTime.of(2024, 11, 24, 10, 0),
+                        LocalDateTime.of(2024, 11, 24, 12, 0),
+                        "ICN", "KIX", Duration.ofHours(2), "Korean Air"),
+                new FlightDto(4L, "FL004", BigDecimal.valueOf(100),
+                        LocalDateTime.of(2024, 11, 24, 11, 0),
+                        LocalDateTime.of(2024, 11, 24, 22, 0),
+                        "ICN", "LAX", Duration.ofHours(11), "Delta Air Lines"),
+                new FlightDto(5L, "FL005", BigDecimal.valueOf(120),
+                        LocalDateTime.of(2024, 11, 24, 12, 0),
+                        LocalDateTime.of(2024, 11, 25, 2, 0),
+                        "ICN", "JFK", Duration.ofHours(14), "American Airlines"),
+                new FlightDto(6L, "FL006", BigDecimal.valueOf(150),
+                        LocalDateTime.of(2024, 11, 24, 13, 0),
+                        LocalDateTime.of(2024, 11, 24, 23, 0),
+                        "ICN", "CDG", Duration.ofHours(10), "Air France"),
+                new FlightDto(7L, "FL007", BigDecimal.valueOf(200),
+                        LocalDateTime.of(2024, 11, 24, 14, 0),
+                        LocalDateTime.of(2024, 11, 25, 0, 0),
+                        "ICN", "SYD", Duration.ofHours(10), "Qantas"),
+                new FlightDto(8L, "FL008", BigDecimal.valueOf(300),
+                        LocalDateTime.of(2024, 11, 24, 15, 0),
+                        LocalDateTime.of(2024, 11, 25, 4, 0),
+                        "ICN", "FRA", Duration.ofHours(13), "Lufthansa"),
+                new FlightDto(9L, "FL009", BigDecimal.valueOf(350),
+                        LocalDateTime.of(2024, 11, 24, 16, 0),
+                        LocalDateTime.of(2024, 11, 24, 22, 0),
+                        "ICN", "SIN", Duration.ofHours(6), "Singapore Airlines")
         );
+
 
         // 가격 기준으로 정렬 후 상위 9개 반환
         return ResponseEntity.ok(flights.stream()
-                .sorted((f1, f2) -> f1.price().compareTo(f2.price()))
+                .sorted((f1, f2) -> f1.amount().compareTo(f2.amount()))
                 .limit(9)
                 .toList());
     }
@@ -66,12 +85,18 @@ public class FlightController {
 
         // 예제 데이터 생성
         List<FlightDto> flights = List.of(
-                new FlightDto("FL001", BigDecimal.valueOf(50), LocalDateTime.now(), departure, destination,
-                        LocalDateTime.now().plusHours(2), LocalDateTime.now().plusHours(4), Duration.ofHours(2)),
-                new FlightDto("FL002", BigDecimal.valueOf(70), LocalDateTime.now(), departure, destination,
-                        LocalDateTime.now().plusHours(3), LocalDateTime.now().plusHours(5), Duration.ofHours(2)),
-                new FlightDto("FL003", BigDecimal.valueOf(120), LocalDateTime.now(), departure, destination,
-                        LocalDateTime.now().plusHours(4), LocalDateTime.now().plusHours(6), Duration.ofHours(2))
+                new FlightDto(7L, "FL007", BigDecimal.valueOf(200),
+                        LocalDateTime.of(2024, 11, 24, 14, 0),
+                        LocalDateTime.of(2024, 11, 25, 0, 0),
+                        "ICN", "SYD", Duration.ofHours(10), "Qantas"),
+                new FlightDto(8L, "FL008", BigDecimal.valueOf(300),
+                        LocalDateTime.of(2024, 11, 24, 15, 0),
+                        LocalDateTime.of(2024, 11, 25, 4, 0),
+                        "ICN", "FRA", Duration.ofHours(13), "Lufthansa"),
+                new FlightDto(9L, "FL009", BigDecimal.valueOf(350),
+                        LocalDateTime.of(2024, 11, 24, 16, 0),
+                        LocalDateTime.of(2024, 11, 24, 22, 0),
+                        "ICN", "SIN", Duration.ofHours(6), "Singapore Airlines")
         );
 
         // 정렬 로직 추가
@@ -80,7 +105,7 @@ public class FlightController {
                     switch (sort) {
                         case "price":
                         default:
-                            return f1.price().compareTo(f2.price());
+                            return f1.amount().compareTo(f2.amount());
                         case "arrivalTime":
                             return f1.arrivalTime().compareTo(f2.arrivalTime());
                         case "flightDuration":
@@ -100,11 +125,11 @@ public class FlightController {
             return ResponseEntity.badRequest().build();
         }
 
-        if ("FL001".equals(flightId)) {
-            return ResponseEntity.ok(new FlightDto(
-                    "FL001", BigDecimal.valueOf(50), LocalDateTime.now(), "ICN", "NRT",
-                    LocalDateTime.now().plusHours(2), LocalDateTime.now().plusHours(4), Duration.ofHours(2)
-            ));
+        if (1L == Long.parseLong(flightId)) {
+            return ResponseEntity.ok(new FlightDto(1L, "FL001", BigDecimal.valueOf(50),
+                    LocalDateTime.of(2024, 11, 24, 8, 0), // 출발 시간
+                    LocalDateTime.of(2024, 11, 24, 10, 0), // 도착 시간
+                    "ICN", "NRT", Duration.ofHours(2), "Korean Air"));
         }
         return ResponseEntity.notFound().build();
     }

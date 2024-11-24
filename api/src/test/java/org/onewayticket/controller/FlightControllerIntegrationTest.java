@@ -45,7 +45,7 @@ public class FlightControllerIntegrationTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertTrue(response.getBody().length > 0);
-        assertTrue(response.getBody()[0].price().compareTo(response.getBody()[1].price()) <= 0);
+        assertTrue(response.getBody()[0].amount().compareTo(response.getBody()[1].amount()) <= 0);
     }
 
 
@@ -63,9 +63,9 @@ public class FlightControllerIntegrationTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("ICN", response.getBody()[0].origin());
-        assertEquals("NRT", response.getBody()[0].destination());
+        assertEquals("SYD", response.getBody()[0].destination());
         assertEquals(todayDate, response.getBody()[0].departureTime().toLocalDate().toString());
-        assertTrue(response.getBody()[0].price().compareTo(response.getBody()[1].price()) <= 0);
+        assertTrue(response.getBody()[0].amount().compareTo(response.getBody()[1].amount()) <= 0);
     }
 
     @Test
@@ -80,7 +80,7 @@ public class FlightControllerIntegrationTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertTrue(response.getBody()[0].price().compareTo(response.getBody()[1].price()) <= 0);
+        assertTrue(response.getBody()[0].amount().compareTo(response.getBody()[1].amount()) <= 0);
     }
 
     @Test
@@ -118,7 +118,7 @@ public class FlightControllerIntegrationTest {
     @DisplayName("유효한 flightId로 항공권 조회가 가능합니다.")
     void Get_flightDetails_with_valid_flightId() {
         // Given
-        String url = baseUrl + "/api/v1/flights/FL001";
+        String url = baseUrl + "/api/v1/flights/1";
 
         // When
         ResponseEntity<FlightDto> response = restTemplate.getForEntity(url, FlightDto.class);
@@ -126,7 +126,7 @@ public class FlightControllerIntegrationTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals("FL001", response.getBody().flightId());
+        assertEquals("FL001", response.getBody().flightNumber());
     }
 
     @Test
