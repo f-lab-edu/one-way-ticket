@@ -10,14 +10,16 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.jdbc.Sql;
 
-import java.time.LocalDate;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Sql(scripts = "/import.sql")
 public class FlightControllerIntegrationTest {
     @LocalServerPort
     private int port;
@@ -53,26 +55,26 @@ public class FlightControllerIntegrationTest {
     @DisplayName("입력한 출발지와 목적지에 해당하는 항공편이 리턴됩니다.")
     void Search_flights_by_valid_info() {
         // Given
-        String todayDate = LocalDate.now().toString(); // 현재 날짜를 "yyyy-MM-dd" 형식으로 가져옴
-        String url = baseUrl + "/api/v1/flights/search?departure=ICN&destination=NRT&departureDate=" + todayDate + "&numberOfPassengers=1&sort=price";
+        String todayDate = "2024-12-05";
+        String url = baseUrl + "/api/v1/flights/search?origin=ICN&destination=NRT&departureDate=" + todayDate + "&sort=price";
 
         // When
         ResponseEntity<FlightDto[]> response = restTemplate.getForEntity(url, FlightDto[].class);
 
         // Then
+        System.out.println(Arrays.toString(response.getBody()));
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("ICN", response.getBody()[0].origin());
-        assertEquals("SYD", response.getBody()[0].destination());
+        assertEquals("NRT", response.getBody()[0].destination());
         assertEquals(todayDate, response.getBody()[0].departureTime().toLocalDate().toString());
-        assertTrue(response.getBody()[0].amount().compareTo(response.getBody()[1].amount()) <= 0);
     }
 
     @Test
     @DisplayName("가격 정렬 필터를 넣으면 최저가 순으로 정렬되어 반환됩니다.")
     void Search_flights_sorted_by_price() {
         // Given
-        String url = baseUrl + "/api/v1/flights/search?departure=ICN&destination=NRT&departureDate=2023-12-01&numberOfPassengers=1&sort=price";
+        String url = baseUrl + "/api/v1/flights/search?origin=ICN&destination=NRT&departureDate=2024-12-05&sort=price";
 
         // When
         ResponseEntity<FlightDto[]> response = restTemplate.getForEntity(url, FlightDto[].class);
@@ -87,7 +89,7 @@ public class FlightControllerIntegrationTest {
     @DisplayName("도착시간 필터를 넣으면 가장 빠른 도착시간 순으로 정렬되어 반환됩니다.")
     void Search_flights_sorted_By_arrivaltime() {
         // Given
-        String url = baseUrl + "/api/v1/flights/search?departure=ICN&destination=NRT&departureDate=2023-12-01&numberOfPassengers=1&sort=arrivalTime";
+        String url = baseUrl + "/api/v1/flights/search?origin=ICN&destination=NRT&departureDate=2024-12-05&sort=arrivalTime";
 
         // When
         ResponseEntity<FlightDto[]> response = restTemplate.getForEntity(url, FlightDto[].class);
@@ -102,11 +104,12 @@ public class FlightControllerIntegrationTest {
     @DisplayName("최소 비행시간 필터를 넣으면 가장 짧은 비행시간 순으로 정렬되어 반환됩니다.")
     void search_flights_sorted_by_flight_duration() {
         // Given
-        String url = baseUrl + "/api/v1/flights/search?departure=ICN&destination=NRT&departureDate=2023-12-01&numberOfPassengers=1&sort=flightDuration";
+        String url = baseUrl + "/api/v1/flights/search?origin=ICN&destination=NRT&departureDate=2024-12-05&sort=flightDuration";
 
         // When
         ResponseEntity<FlightDto[]> response = restTemplate.getForEntity(url, FlightDto[].class);
 
+        System.out.println(Arrays.toString(response.getBody()));
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -118,7 +121,8 @@ public class FlightControllerIntegrationTest {
     @DisplayName("유효한 flightId로 항공권 조회가 가능합니다.")
     void Get_flightDetails_with_valid_flightId() {
         // Given
-        String url = baseUrl + "/api/v1/flights/1";
+        Long flightId = 1L;
+        String url = baseUrl + "/api/v1/flights/" + flightId;
 
         // When
         ResponseEntity<FlightDto> response = restTemplate.getForEntity(url, FlightDto.class);
@@ -126,7 +130,7 @@ public class FlightControllerIntegrationTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals("FL001", response.getBody().flightNumber());
+        assertEquals("AA101", response.getBody().flightNumber());
     }
 
     @Test

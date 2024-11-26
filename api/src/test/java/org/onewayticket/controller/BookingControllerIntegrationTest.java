@@ -15,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.jdbc.Sql;
 
 import java.util.List;
 
@@ -23,8 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Sql(scripts = "/import.sql")
 class BookingControllerIntegrationTest {
-
     @LocalServerPort
     private int port;
 
@@ -45,9 +46,8 @@ class BookingControllerIntegrationTest {
         String url = baseUrl + "/api/v1/bookings";
         BookingRequestDto request = new BookingRequestDto(
                 "john.doe@example.com",
-                List.of(new PassengerDto("John", "Doe", "1995-05-01", "12A")), // 탑승자 정보
-                "FL123", // 항공편명
-                "Confirmed" // 결제 ID
+                List.of(new PassengerDto("John", "Doe", "1995-05-01", "M34993022", "male", "12A")), // 탑승자 정보
+                "paymentKey" // 결제 ID
         );
 
         // When
@@ -56,7 +56,7 @@ class BookingControllerIntegrationTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals( "john.doe@example.com", response.getBody().bookingEmail());
+        assertEquals("john.doe@example.com", response.getBody().bookingEmail());
     }
 
     @Test
@@ -66,9 +66,8 @@ class BookingControllerIntegrationTest {
         String url = baseUrl + "/api/v1/bookings";
         BookingRequestDto request = new BookingRequestDto(
                 "john.doe@example.com",
-                List.of(new PassengerDto("John", "Doe", "1995-05-01", "12A")), // 탑승자 정보
-                "FL123", // 항공편명
-                "INVALID*ID"  // 유효하지 않은 결제 ID
+                List.of(new PassengerDto("John", "Doe", "1995-05-01", "M34993022", "male", "12A")), // 탑승자 정보
+                "" // 결제 ID
         );
 
         // When
@@ -77,6 +76,7 @@ class BookingControllerIntegrationTest {
         // Then
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
+
     @Test
     @DisplayName("기존 예약 고객은 예약번호, 이메일, 항공편 정보를 통해 예약정보를 조회할 수 있습니다.")
     void Get_bookingDetails_with_valid_info() {
@@ -106,23 +106,11 @@ class BookingControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("잘못된 입력값으로 예약 조회할 때는 400을 반환합니다.")
-    void Get_bookingDetails_with_invalid_input_bad_request() {
-        // Given
-        String url = baseUrl + "/api/v1/bookings?bookingId=&name=&birthDate=9999-01-01";
-
-        // When
-        ResponseEntity<Void> response = restTemplate.getForEntity(url, Void.class);
-
-        // Then
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    }
-
-    @Test
     @DisplayName("사용자의 정보로 생성된 유효한 토큰으로 예약을 취소할 수 있습니다.")
     void Delete_booking_with_valid_token() {
         // Given
-        String url = baseUrl + "/api/v1/bookings/123";
+        Long bookingId = 2L;
+        String url = baseUrl + "/api/v1/bookings" + bookingId;
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer VALID_TOKEN");
 

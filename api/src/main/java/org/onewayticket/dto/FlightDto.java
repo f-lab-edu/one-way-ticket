@@ -1,9 +1,12 @@
 package org.onewayticket.dto;
 
+import lombok.Builder;
+
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+@Builder
 public record FlightDto(
         Long id,                      // 항공편 id
         String flightNumber,          // 항공편명
