@@ -2,22 +2,26 @@ package org.onewayticket.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.onewayticket.enums.PaymentMethod;
+import org.onewayticket.enums.PaymentStatus;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
+@NoArgsConstructor
 @Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor
 public class TossPayment {
 
     @Id
@@ -31,20 +35,22 @@ public class TossPayment {
     @Column(nullable = false)
     private String tossOrderId;
 
-    private long totalAmount;
+    private String currency;
 
-//    private Booking booking;
+    private BigDecimal totalAmount;
 
-//    @Enumerated(value = EnumType.STRING)
-//    @Column(nullable = false)
-//    private TossPaymentMethod tossPaymentMethod;
-//
-//    @Enumerated(value = EnumType.STRING)
-//    @Column(nullable = false)
-//    private TossPaymentStatus tossPaymentStatus;
+    @Enumerated(value = EnumType.STRING)
+    private PaymentMethod paymentMethod;
 
-    @Column(nullable = false)
+    @Enumerated(value = EnumType.STRING)
+    private PaymentStatus paymentStatus;
+
     private LocalDateTime requestedAt;
 
+    private LocalDateTime approvedAt;
+
+    public void updatePaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
 
 }

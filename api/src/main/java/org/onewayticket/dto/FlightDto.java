@@ -1,10 +1,13 @@
 package org.onewayticket.dto;
 
 import lombok.Builder;
+import org.onewayticket.domain.Flight;
 
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Builder
 public record FlightDto(
@@ -19,4 +22,14 @@ public record FlightDto(
         String carrier                // 항공사
 ) {
 
+    public static FlightDto from(Flight flight) {
+        return new FlightDto(flight.getId(), flight.getFlightNumber(), flight.getAmount(), flight.getDepartureTime(), flight.getArrivalTime(), flight.getOrigin(),
+                flight.getDestination(), Duration.ofMinutes(flight.getDurationInMinutes()), flight.getCarrier());
+    }
+
+    public static List<FlightDto> from(List<Flight> flightList) {
+        return flightList.stream()
+                .map(FlightDto::from)
+                .collect(Collectors.toList());
+    }
 }

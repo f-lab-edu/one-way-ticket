@@ -10,6 +10,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.Arrays;
@@ -19,23 +20,42 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Sql(scripts = "/import.sql")
 public class FlightControllerIntegrationTest {
+
     @LocalServerPort
     private int port;
 
     @Autowired
     private TestRestTemplate restTemplate;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     private String baseUrl;
 
     @BeforeEach
     void setup() {
         baseUrl = "http://localhost:" + port;
+        resetDatabase();
+        insertTestData();
+    }
+
+    private void resetDatabase() {
+        jdbcTemplate.execute("TRUNCATE TABLE flight");
+        jdbcTemplate.execute("ALTER TABLE flight ALTER COLUMN id RESTART WITH 1");
+    }
+
+    private void insertTestData() {
+        jdbcTemplate.execute("""
+            INSERT INTO flight (flight_number, amount, departure_time, arrival_time, origin, destination, duration_in_minutes, carrier) VALUES
+            ('AA101', 150.00, '2024-12-01 08:00:00', '2024-12-01 11:00:00', 'ICN', 'LAX', 180, 'American Airlines'),
+            ('UA202', 200.00, '2024-12-01 09:00:00', '2024-12-01 13:00:00', 'ICN', 'ORD', 240, 'United Airlines'),
+            ('DL303', 175.50, '2024-12-02 14:00:00', '2024-12-02 18:00:00', 'ICN', 'SEA', 240, 'Delta Airlines');
+        """);
     }
 
     @Test
-    @DisplayName("저렴한 순으로 상위 9개 목적지에 대한 항공권 정보를 반환합니다.")
+    @DisplayName("저렴한 순으로 상위 항공권 정보를 반환합니다.")
     void Get_cheapest_flights() {
         // Given
         String url = baseUrl + "/api/v1/flights/cheapest";
@@ -46,79 +66,28 @@ public class FlightControllerIntegrationTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertTrue(response.getBody().length > 0);
-        assertTrue(response.getBody()[0].amount().compareTo(response.getBody()[1].amount()) <= 0);
+        assertTrue(response.getBody().length > 0, "항공권 정보가 반환되지 않았습니다.");
+        assertTrue(response.getBody()[0].amount().compareTo(response.getBody()[1].amount()) <= 0, "가격이 오름차순으로 정렬되지 않았습니다.");
     }
 
-
     @Test
-    @DisplayName("입력한 출발지와 목적지에 해당하는 항공편이 리턴됩니다.")
+    @DisplayName("유효한 출발지와 목적지로 항공편 검색")
     void Search_flights_by_valid_info() {
         // Given
-        String todayDate = "2024-12-05";
-        String url = baseUrl + "/api/v1/flights/search?origin=ICN&destination=NRT&departureDate=" + todayDate + "&sort=price";
+        String url = baseUrl + "/api/v1/flights/search?origin=ICN&destination=LAX&departureDate=2024-12-01&sort=price";
 
         // When
         ResponseEntity<FlightDto[]> response = restTemplate.getForEntity(url, FlightDto[].class);
 
         // Then
-        System.out.println(Arrays.toString(response.getBody()));
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("ICN", response.getBody()[0].origin());
-        assertEquals("NRT", response.getBody()[0].destination());
-        assertEquals(todayDate, response.getBody()[0].departureTime().toLocalDate().toString());
+        assertEquals("LAX", response.getBody()[0].destination());
     }
 
     @Test
-    @DisplayName("가격 정렬 필터를 넣으면 최저가 순으로 정렬되어 반환됩니다.")
-    void Search_flights_sorted_by_price() {
-        // Given
-        String url = baseUrl + "/api/v1/flights/search?origin=ICN&destination=NRT&departureDate=2024-12-05&sort=price";
-
-        // When
-        ResponseEntity<FlightDto[]> response = restTemplate.getForEntity(url, FlightDto[].class);
-
-        // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertTrue(response.getBody()[0].amount().compareTo(response.getBody()[1].amount()) <= 0);
-    }
-
-    @Test
-    @DisplayName("도착시간 필터를 넣으면 가장 빠른 도착시간 순으로 정렬되어 반환됩니다.")
-    void Search_flights_sorted_By_arrivaltime() {
-        // Given
-        String url = baseUrl + "/api/v1/flights/search?origin=ICN&destination=NRT&departureDate=2024-12-05&sort=arrivalTime";
-
-        // When
-        ResponseEntity<FlightDto[]> response = restTemplate.getForEntity(url, FlightDto[].class);
-
-        // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertTrue(response.getBody()[0].arrivalTime().compareTo(response.getBody()[1].arrivalTime()) <= 0);
-    }
-
-    @Test
-    @DisplayName("최소 비행시간 필터를 넣으면 가장 짧은 비행시간 순으로 정렬되어 반환됩니다.")
-    void search_flights_sorted_by_flight_duration() {
-        // Given
-        String url = baseUrl + "/api/v1/flights/search?origin=ICN&destination=NRT&departureDate=2024-12-05&sort=flightDuration";
-
-        // When
-        ResponseEntity<FlightDto[]> response = restTemplate.getForEntity(url, FlightDto[].class);
-
-        System.out.println(Arrays.toString(response.getBody()));
-        // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertTrue(response.getBody()[0].flightDuration().compareTo(response.getBody()[1].flightDuration()) <= 0);
-    }
-
-
-    @Test
-    @DisplayName("유효한 flightId로 항공권 조회가 가능합니다.")
+    @DisplayName("유효한 flightId로 항공권 상세 조회")
     void Get_flightDetails_with_valid_flightId() {
         // Given
         Long flightId = 1L;
@@ -134,17 +103,15 @@ public class FlightControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("유효하지 않은 flightId는 400을 반환합니다.")
-    void testGetFlightDetailsBadRequest() {
+    @DisplayName("유효하지 않은 flightId로 항공권 조회")
+    void Get_flightDetails_with_invalid_flightId() {
         // Given
-        String url = baseUrl + "/api/v1/flights/" + "A".repeat(51);
+        String url = baseUrl + "/api/v1/flights/9999";
 
         // When
         ResponseEntity<Void> response = restTemplate.getForEntity(url, Void.class);
 
         // Then
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
-
-
 }

@@ -8,11 +8,12 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface FlightRepository extends JpaRepository<Flight, Long> {
 
-    List<Flight> findByOriginOrderByAmountAsc(String origin);
+    Optional<List<Flight>> findByOriginOrderByAmountAsc(String origin);
 
     @Query("""
     SELECT f FROM Flight f
@@ -20,7 +21,7 @@ public interface FlightRepository extends JpaRepository<Flight, Long> {
       AND (:destination IS NULL OR f.destination = :destination)
       AND (:departureDate IS NULL OR CAST(f.departureTime AS date) = :departureDate)
     """)
-    List<Flight> searchFlights(
+    Optional<List<Flight>> searchFlights(
             @Param("origin") String origin,
             @Param("destination") String destination,
             @Param("departureDate") LocalDate departureDate

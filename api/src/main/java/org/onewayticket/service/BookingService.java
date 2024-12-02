@@ -1,90 +1,75 @@
 package org.onewayticket.service;
 
 import lombok.RequiredArgsConstructor;
+import org.antlr.v4.runtime.Token;
 import org.onewayticket.domain.Booking;
+import org.onewayticket.domain.BookingDetail;
+import org.onewayticket.domain.BookingResponse;
 import org.onewayticket.domain.Flight;
-import org.onewayticket.dto.BookingDetailsDto;
-import org.onewayticket.dto.BookingRequestDto;
-import org.onewayticket.dto.FlightDto;
-import org.onewayticket.dto.PassengerDto;
+import org.onewayticket.domain.Passenger;
+import org.onewayticket.dto.BookingResponseDto;
+import org.onewayticket.enums.BookingStatus;
 import org.onewayticket.repository.BookingRepository;
-import org.onewayticket.repository.FlightRepository;
-import org.onewayticket.repository.PassengerRepository;
-import org.onewayticket.security.AuthService;
+import org.onewayticket.security.TokenProvider;
+import org.onewayticket.util.ReferenceCodeGenerator;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
 public class BookingService {
 
     private final BookingRepository bookingRepository;
-    private final FlightRepository flightRepository;
-    private final PassengerRepository passengerRepository;
-    private final AuthService authService;
+    private final FlightService flightService;
+    private final TokenProvider tokenProvider;
 
-    public void createBooking(BookingRequestDto bookingRequestInfo, String flightId) {
-        Booking booking = Booking.from(bookingRequestInfo, Long.valueOf(flightId));
+    public Booking createBooking(String email, List<Passenger> passengers, String paymentKey, Long flightId) {
+        Booking booking = Booking.builder().referenceCode(ReferenceCodeGenerator.generateReferenceCode())
+                .bookingEmail(email).flightId(flightId).paymentKey(paymentKey)
+                .passengers(passengers).status(BookingStatus.COMPLETED).build();
         try {
             bookingRepository.save(booking);
-        } catch (Exception e) {
-            throw new RuntimeException("Booking 저장 중 예외가 발생했습니다: " + e.getMessage(), e);
+        } catch (DataAccessException e) {
+            throw new DataIntegrityViolationException("Booking 저장 중 예외가 발생했습니다: " + e.getMessage(), e);
         }
-
+        return booking;
     }
 
-    public boolean cancelBooking(String id, String token) {
+    public void cancelBooking(String id, String token) {
         Booking booking = bookingRepository.findById(Long.valueOf(id))
                 .orElseThrow(() -> new IllegalArgumentException("해당 예약 정보가 없습니다."));
-        String expectedToken = authService.generateToken(booking.getReferenceCode(), booking.getBookingEmail());
+        String expectedToken = tokenProvider.generateToken(booking.getReferenceCode(), booking.getBookingEmail());
+
         if (expectedToken.equals(token)) {
-            bookingRepository.delete(booking);
-            return true;
+            try {
+                bookingRepository.delete(booking);
+            } catch (DataAccessException e) {
+                throw new DataIntegrityViolationException("Booking 삭제 중 예외가 발생했습니다: " + e.getMessage(), e);
+            }
         } else {
             throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
         }
 
     }
+    public BookingDetail getBookingDetails(String referenceCode) {
 
-    public BookingDetailsDto getBookingDetails(String referenceCode) {
-        // Booking 조회
+        // TODO: reference Code 형식 정한 후 검증
+        // TODO: Index 추가 여부 고민
         Booking booking = bookingRepository.findByReferenceCode(referenceCode)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+                .orElseThrow(() -> new NoSuchElementException("예약 정보를 찾을 수 없습니다."));
 
-        /**
-         * Flight 조회 및 DTO 변환
-         * mapping 관계 고민
-         */
-        Flight flight = flightRepository.findById(booking.getFlightId())
-                .orElseThrow(() -> new RuntimeException("Flight not found"));
+        Flight flight = flightService.getFlightDetails(booking.getFlightId().toString());
 
-        FlightDto flightDto = new FlightDto(flight.getId(), flight.getFlightNumber(),
-                flight.getAmount(), flight.getDepartureTime(), flight.getArrivalTime(),
-                flight.getOrigin(), flight.getDestination(), Duration.ofMinutes(flight.getDurationInMinutes()), flight.getCarrier());
+        return new BookingDetail(booking, flight);
+    }
 
-
-        // Passenger DTO 변환
-        List<PassengerDto> passengerDtoList = booking.getPassengers()
-                .stream()
-                .map(passenger -> new PassengerDto(
-                        passenger.getFirstName(),
-                        passenger.getLastName(),
-                        passenger.getDateOfBirth().toString(),
-                        passenger.getPassportNumber(),
-                        passenger.getGender(),
-                        passenger.getSeatNumber()
-                ))
-                .toList();
-
-        // BookingDetailsDto 반환
-        return new BookingDetailsDto(
-                booking.getId(),
-                booking.getReferenceCode(),
-                booking.getBookingEmail(),
-                flightDto,
-                passengerDtoList
-        );
+    public BookingResponse getBookingResponse(String referenceCode, String email){
+        String token = tokenProvider.generateToken(referenceCode, email);
+        BookingDetail bookingDetail = getBookingDetails(referenceCode);
+        return new BookingResponse(bookingDetail,token);
     }
 }

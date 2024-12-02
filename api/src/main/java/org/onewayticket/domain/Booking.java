@@ -50,25 +50,7 @@ public class Booking {
     @Column(columnDefinition = "VARCHAR(50)")
     private BookingStatus status;
 
-
     private LocalDateTime createdAt; // 예약 시간
 
-    public static Booking from(BookingRequestDto dto, Long flightId) {
-        return Booking.builder()
-                .referenceCode(generateReferenceCode())
-                .bookingEmail(dto.bookingEmail())
-                .flightId(flightId)
-                .paymentKey(dto.paymentKey())
-                .status(BookingStatus.PENDING)
-                .createdAt(LocalDateTime.now())
-                .passengers(dto.passengers().stream()
-                        .map(Passenger::from)
-                        .toList())
-                .build();
-    }
-
-    private static String generateReferenceCode() {
-        return UUID.randomUUID().toString().substring(0, 8); // 앞 8자리만 사용
-    }
 
 }

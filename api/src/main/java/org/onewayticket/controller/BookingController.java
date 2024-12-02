@@ -1,13 +1,19 @@
 package org.onewayticket.controller;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.onewayticket.domain.Booking;
+import org.onewayticket.domain.BookingResponse;
 import org.onewayticket.dto.BookingDetailsDto;
 import org.onewayticket.dto.BookingRequestDto;
 import org.onewayticket.dto.BookingResponseDto;
-import org.onewayticket.security.AuthService;
+import org.onewayticket.dto.PassengerDto;
+import org.onewayticket.security.TokenProvider;
 import org.onewayticket.service.BookingService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,46 +24,32 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/bookings")
 public class BookingController {
 
     private final BookingService bookingService;
-    private final AuthService authService;
+    private final TokenProvider tokenProvider;
 
     // 예약 생성
     @PostMapping
-    public ResponseEntity<BookingDetailsDto> createBooking(@RequestBody BookingRequestDto bookingRequestInfo,
-                                                           @PathVariable String flightId) {
-
-        // 결제 정보 검증
-        if (bookingRequestInfo.paymentKey() == null || bookingRequestInfo.paymentKey().isBlank()) {
-            return ResponseEntity.status(400).build();
-        }
-
-        bookingService.createBooking(bookingRequestInfo, flightId);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<Booking> createBooking(@Valid @RequestBody BookingRequestDto bookingRequestInfo,
+                                                 @NotNull @RequestParam String flightId) {
+        Booking booking = bookingService.createBooking(bookingRequestInfo.bookingEmail(), PassengerDto.from(bookingRequestInfo.passengers()), bookingRequestInfo.paymentKey(), Long.parseLong(flightId));
+        return ResponseEntity.status(HttpStatus.CREATED).body(booking);
 
     }
 
     @GetMapping
-    public ResponseEntity<BookingResponseDto> getBookingDetails(
-            @RequestParam("referenceCode") String referenceCode,
-            @RequestParam("bookingEmail") String bookingEmail) {
+    public ResponseEntity<BookingResponseDto> getBookingDetailsDto(
+            @RequestParam("referenceCode") @NotNull String referenceCode,
+            @RequestParam("bookingEmail") @NotNull String bookingEmail) {
 
-
-        BookingDetailsDto bookingDetailsDto = bookingService.getBookingDetails(referenceCode);
-
-        // bookingId가 일치하지 않을 경우 예외 처리
-        if (!bookingDetailsDto.referenceCode().equals(referenceCode)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
-
-        String token = authService.generateToken(referenceCode, bookingEmail);
-
+        BookingResponse bookingResponse = bookingService.getBookingResponse(referenceCode, bookingEmail);
         // record 인스턴스 생성
-        BookingResponseDto responseDto = new BookingResponseDto(token, bookingDetailsDto);
+        BookingResponseDto responseDto = BookingResponseDto.from(bookingResponse);
 
         // DTO 반환
         return ResponseEntity.ok(responseDto);
@@ -67,14 +59,9 @@ public class BookingController {
     // 예약 취소
     @DeleteMapping("/{id}")
     public ResponseEntity<String> cancelBooking(
-            @PathVariable String id,
-            @RequestHeader(value = "Authorization", required = true) String token) {
-
-        try {
-            bookingService.cancelBooking(id, token);
-        } catch (Exception e) {
-            return ResponseEntity.status(400).build();
-        }
+            @PathVariable @NotNull String id,
+            @RequestHeader(value = "Authorization", required = true) @NotNull String token) {
+        bookingService.cancelBooking(id, token);
         return ResponseEntity.ok("Booking with ID " + id + " has been canceled successfully.");
 
     }

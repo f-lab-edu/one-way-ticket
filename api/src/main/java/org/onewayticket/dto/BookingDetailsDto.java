@@ -1,5 +1,7 @@
 package org.onewayticket.dto;
 
+import org.onewayticket.domain.BookingDetail;
+
 import java.util.List;
 
 public record BookingDetailsDto(
@@ -9,4 +11,15 @@ public record BookingDetailsDto(
         FlightDto flightDto,                // 항공편 정보
         List<PassengerDto> passengerDtoList// 탑승자 정보
 ) {
+    public static BookingDetailsDto from(BookingDetail bookingDetail) {
+        return new BookingDetailsDto(
+                bookingDetail.getBookingId(),
+                bookingDetail.getReferenceCode(),
+                bookingDetail.getBookingEmail(),
+                FlightDto.from(bookingDetail.getFlight()),
+                bookingDetail.getPassengers().stream()
+                        .map(PassengerDto::from)
+                        .toList()
+        );
+    }
 }
