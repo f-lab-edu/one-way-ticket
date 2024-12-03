@@ -13,7 +13,6 @@ import org.onewayticket.domain.Flight;
 import org.onewayticket.domain.Passenger;
 import org.onewayticket.enums.BookingStatus;
 import org.onewayticket.repository.BookingRepository;
-import org.onewayticket.security.TokenProvider;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 
@@ -36,8 +35,7 @@ public class BookingServiceTest {
 
     @Mock
     private FlightService flightService;
-    @Mock
-    private TokenProvider tokenProvider;
+
     @InjectMocks
     private BookingService bookingService;
 
@@ -103,15 +101,12 @@ public class BookingServiceTest {
 
         Mockito.when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
 
-        // tokenProvider Mock 설정
-        Mockito.when(tokenProvider.generateToken("REF12345", "test@example.com"))
-                .thenReturn("VALID_TOKEN");
-
+        String token = bookingService.generateToken(booking.getReferenceCode(), booking.getBookingEmail());
         // when
-        bookingService.cancelBooking("1", "VALID_TOKEN");
+        bookingService.cancelBooking("1", token);
 
         // then
-        Mockito.verify(bookingRepository, times(1)).delete(booking);
+        Mockito.verify(bookingRepository, times(1)).save(booking);
     }
 
 
@@ -125,8 +120,6 @@ public class BookingServiceTest {
                 .build();
 
         Mockito.when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
-        Mockito.when(tokenProvider.generateToken("REF12345", "test@example.com"))
-                .thenReturn("VALID_TOKEN");
 
         // when & then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->

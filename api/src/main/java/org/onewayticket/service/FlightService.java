@@ -32,7 +32,7 @@ public class FlightService {
     public List<Flight> searchFlights(String origin, String destination, String departureDate, String sort) {
         LocalDate parsedDate = parseDate(departureDate);
         validateSortOption(sort); // 정렬 옵션 검증
-        List<Flight> flights = flightRepository.searchFlights(origin, destination, parsedDate).orElseThrow(
+        List<Flight> flights = flightRepository.findByOriginAndDestinationAndDepartureTime(origin, destination, parsedDate).orElseThrow(
                 () -> new NoSuchElementException("해당 조건에 맞는 항공권이 존재하지 않습니다."));
         flights.sort(getComparatorForSort(sort));
         return flights;

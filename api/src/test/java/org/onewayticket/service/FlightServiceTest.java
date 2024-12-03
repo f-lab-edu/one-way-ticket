@@ -90,7 +90,7 @@ public class FlightServiceTest {
         List<Flight> mockFlights = new ArrayList<>();
         mockFlights.add(flight1);
         mockFlights.add(flight2);
-        Mockito.when(flightRepository.searchFlights(origin, destination, LocalDate.parse(departureDate)))
+        Mockito.when(flightRepository.findByOriginAndDestinationAndDepartureTime(origin, destination, LocalDate.parse(departureDate)))
                 .thenReturn(Optional.of(mockFlights));
 
         // when
@@ -101,7 +101,7 @@ public class FlightServiceTest {
         assertEquals(2, result.size());
         assertEquals(new BigDecimal(150), result.get(0).getAmount());
         Mockito.verify(flightRepository, times(1))
-                .searchFlights(origin, destination, LocalDate.parse(departureDate));
+                .findByOriginAndDestinationAndDepartureTime(origin, destination, LocalDate.parse(departureDate));
     }
 
     @Test
@@ -134,7 +134,7 @@ public class FlightServiceTest {
     @DisplayName("조건에 맞는 항공권이 존재하지 않으면 404가 반환됩니다.")
     void Search_flights_with_no_results() {
         // given
-        Mockito.when(flightRepository.searchFlights(anyString(), anyString(), any(LocalDate.class)))
+        Mockito.when(flightRepository.findByOriginAndDestinationAndDepartureTime(anyString(), anyString(), any(LocalDate.class)))
                 .thenReturn(Optional.empty());
 
         // when & then

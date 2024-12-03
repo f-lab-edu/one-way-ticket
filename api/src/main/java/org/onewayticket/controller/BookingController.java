@@ -5,11 +5,9 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.onewayticket.domain.Booking;
 import org.onewayticket.domain.BookingResponse;
-import org.onewayticket.dto.BookingDetailsDto;
 import org.onewayticket.dto.BookingRequestDto;
 import org.onewayticket.dto.BookingResponseDto;
 import org.onewayticket.dto.PassengerDto;
-import org.onewayticket.security.TokenProvider;
 import org.onewayticket.service.BookingService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +29,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class BookingController {
 
     private final BookingService bookingService;
-    private final TokenProvider tokenProvider;
 
     // 예약 생성
     @PostMapping

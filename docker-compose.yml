@@ -1,6 +1,25 @@
 services:
-  mysql:
-    image: mysql:8.0
+  app:
+    image: openjdk:17-jdk-slim
+    container_name: spring-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/my-db
+      SPRING_DATASOURCE_USERNAME: tester
+      SPRING_DATASOURCE_PASSWORD: 1234
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  db:
+    image: mysql:8.3.0
+    container_name: mysql-db
+    restart: always
     ports:
       - "3306:3306"
     environment:
@@ -10,6 +29,11 @@ services:
       MYSQL_PASSWORD: 1234
     volumes:
       - db-data:/var/lib/mysql
+    networks:
+      - app-network
 
 volumes:
   db-data:
+
+networks:
+  app-network:
