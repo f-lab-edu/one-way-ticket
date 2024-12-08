@@ -12,6 +12,8 @@ import org.onewayticket.repository.FlightRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -90,7 +92,11 @@ public class FlightServiceTest {
         List<Flight> mockFlights = new ArrayList<>();
         mockFlights.add(flight1);
         mockFlights.add(flight2);
-        Mockito.when(flightRepository.findByOriginAndDestinationAndDepartureTime(origin, destination, LocalDate.parse(departureDate)))
+        LocalDateTime startOfDay = LocalDate.parse(departureDate).atStartOfDay();
+        LocalDateTime endOfDay = LocalDate.parse(departureDate).atTime(LocalTime.MAX);
+        Mockito.when(flightRepository.findByOriginAndDestinationAndDepartureTimeBetween(
+                        origin, destination, startOfDay, endOfDay
+                ))
                 .thenReturn(Optional.of(mockFlights));
 
         // when
@@ -101,7 +107,9 @@ public class FlightServiceTest {
         assertEquals(2, result.size());
         assertEquals(new BigDecimal(150), result.get(0).getAmount());
         Mockito.verify(flightRepository, times(1))
-                .findByOriginAndDestinationAndDepartureTime(origin, destination, LocalDate.parse(departureDate));
+                .findByOriginAndDestinationAndDepartureTimeBetween(
+                        origin, destination, startOfDay, endOfDay
+                );
     }
 
     @Test
@@ -134,7 +142,7 @@ public class FlightServiceTest {
     @DisplayName("조건에 맞는 항공권이 존재하지 않으면 404가 반환됩니다.")
     void Search_flights_with_no_results() {
         // given
-        Mockito.when(flightRepository.findByOriginAndDestinationAndDepartureTime(anyString(), anyString(), any(LocalDate.class)))
+        Mockito.when(flightRepository.findByOriginAndDestinationAndDepartureTimeBetween(anyString(), anyString(), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(Optional.empty());
 
         // when & then

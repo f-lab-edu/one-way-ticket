@@ -1,5 +1,4 @@
--- Booking 테이블
-CREATE TABLE booking (
+CREATE TABLE IF NOT EXISTS booking (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     reference_code VARCHAR(255),
     booking_email VARCHAR(255),
@@ -9,8 +8,7 @@ CREATE TABLE booking (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Passenger 테이블
-CREATE TABLE passenger (
+CREATE TABLE IF NOT EXISTS passenger (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     first_name VARCHAR(255),
     last_name VARCHAR(255),
@@ -19,11 +17,10 @@ CREATE TABLE passenger (
     seat_number VARCHAR(10),
     date_of_birth DATE,
     booking_id BIGINT,
-    CONSTRAINT fk_passenger_booking FOREIGN KEY (booking_id) REFERENCES booking(id) ON DELETE CASCADE
+    FOREIGN KEY (booking_id) REFERENCES booking(id) ON DELETE CASCADE
 );
 
--- Flight 테이블
-CREATE TABLE flight (
+CREATE TABLE IF NOT EXISTS flight (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     flight_number VARCHAR(255),
     amount DECIMAL(19, 2),
@@ -35,8 +32,7 @@ CREATE TABLE flight (
     carrier VARCHAR(255)
 );
 
--- TossPayment 테이블
-CREATE TABLE toss_payment (
+CREATE TABLE IF NOT EXISTS toss_payment (
     payment_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     toss_payment_key VARCHAR(255) NOT NULL UNIQUE,
     toss_order_id VARCHAR(255) NOT NULL,
@@ -48,8 +44,7 @@ CREATE TABLE toss_payment (
     approved_at DATETIME
 );
 
--- Member 테이블 (user -> member로 변경)
-CREATE TABLE member (
+CREATE TABLE IF NOT EXISTS member (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(255) UNIQUE,
     password VARCHAR(255) NOT NULL,

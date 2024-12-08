@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.Comparator;
 import java.util.List;
@@ -31,8 +33,12 @@ public class FlightService {
 
     public List<Flight> searchFlights(String origin, String destination, String departureDate, String sort) {
         LocalDate parsedDate = parseDate(departureDate);
+        LocalDateTime startOfDay = parsedDate.atStartOfDay();
+        LocalDateTime endOfDay = parsedDate.atTime(LocalTime.MAX);
         validateSortOption(sort); // 정렬 옵션 검증
-        List<Flight> flights = flightRepository.findByOriginAndDestinationAndDepartureTime(origin, destination, parsedDate).orElseThrow(
+        List<Flight> flights = flightRepository.findByOriginAndDestinationAndDepartureTimeBetween(
+                origin, destination, startOfDay, endOfDay
+        ).orElseThrow(
                 () -> new NoSuchElementException("해당 조건에 맞는 항공권이 존재하지 않습니다."));
         flights.sort(getComparatorForSort(sort));
         return flights;
@@ -55,7 +61,7 @@ public class FlightService {
         }
     }
 
-    void validateSortOption(String sort) {
+    private void validateSortOption(String sort) {
         List<String> validSortOptions = List.of("price", "arrivalTime", "flightDuration");
         if (!validSortOptions.contains(sort)) {
             throw new IllegalArgumentException("잘못된 정렬 방식입니다.");

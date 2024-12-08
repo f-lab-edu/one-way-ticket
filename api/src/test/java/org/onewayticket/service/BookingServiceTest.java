@@ -94,16 +94,17 @@ public class BookingServiceTest {
     @DisplayName("토큰이 올바르다면 정상적으로 Booking을 취소할 수 있습니다.")
     void Cancel_booking_successfully() {
         // given
+        String referenceCode = "REF12345";
+        String bookingEmail = "test@example.com";
         Booking booking = Booking.builder()
-                .referenceCode("REF12345")
-                .bookingEmail("test@example.com")
+                .referenceCode(referenceCode)
+                .bookingEmail(bookingEmail)
                 .build();
+        String validToken = "2e27e2d2";
 
         Mockito.when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
-
-        String token = bookingService.generateToken(booking.getReferenceCode(), booking.getBookingEmail());
         // when
-        bookingService.cancelBooking("1", token);
+        bookingService.cancelBooking("1", validToken);
 
         // then
         Mockito.verify(bookingRepository, times(1)).save(booking);
@@ -184,5 +185,4 @@ public class BookingServiceTest {
 
         assertTrue(exception.getMessage().contains("예약 정보를 찾을 수 없습니다."));
     }
-
 }

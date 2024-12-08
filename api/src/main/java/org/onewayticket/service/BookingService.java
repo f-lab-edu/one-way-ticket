@@ -15,10 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.zip.CRC32;
 
 @Service
 @RequiredArgsConstructor
@@ -71,31 +70,20 @@ public class BookingService {
     }
 
     // 토큰 포함된 Response를 반환하기 위한 메서드
-    public BookingResponse getBookingResponse(String referenceCode, String email){
+    public BookingResponse getBookingResponse(String referenceCode, String email) {
         String token = generateToken(referenceCode, email);
         BookingDetail bookingDetail = getBookingDetails(referenceCode);
-        return new BookingResponse(bookingDetail,token);
+        return new BookingResponse(bookingDetail, token);
     }
 
     /**
      * 예약번호와 이메일 기반으로 해시 토큰 생성
      */
-    public String generateToken(String reservationNumber, String email) {
-        try {
-            String data = reservationNumber + email;
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Error generating token", e);
-        }
+    private String generateToken(String reservationNumber, String email) {
+        String data = reservationNumber + email;
+        CRC32 crc32 = new CRC32();
+        crc32.update(data.getBytes(StandardCharsets.UTF_8));
+        return Long.toHexString(crc32.getValue());
     }
+
 }

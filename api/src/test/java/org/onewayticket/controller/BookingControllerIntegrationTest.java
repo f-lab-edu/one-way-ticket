@@ -19,16 +19,12 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@AutoConfigureTestDatabase(connection = EmbeddedDatabaseConnection.H2, replace = AutoConfigureTestDatabase.Replace.ANY)
-@TestPropertySource("classpath:application-test.yml")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class BookingControllerIntegrationTest {
 
@@ -51,38 +47,37 @@ class BookingControllerIntegrationTest {
     }
 
     private void resetDatabase() {
-        jdbcTemplate.execute("SET REFERENTIAL_INTEGRITY FALSE");
+        jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
         jdbcTemplate.execute("TRUNCATE TABLE passenger");
         jdbcTemplate.execute("TRUNCATE TABLE booking");
         jdbcTemplate.execute("TRUNCATE TABLE flight");
-        jdbcTemplate.execute("ALTER TABLE passenger ALTER COLUMN id RESTART WITH 1");
-        jdbcTemplate.execute("ALTER TABLE booking ALTER COLUMN id RESTART WITH 1");
-        jdbcTemplate.execute("ALTER TABLE flight ALTER COLUMN id RESTART WITH 1");
-        jdbcTemplate.execute("SET REFERENTIAL_INTEGRITY TRUE");
+        jdbcTemplate.execute("ALTER TABLE passenger AUTO_INCREMENT = 1");
+        jdbcTemplate.execute("ALTER TABLE booking AUTO_INCREMENT = 1");
+        jdbcTemplate.execute("ALTER TABLE flight AUTO_INCREMENT = 1");
+        jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
     }
-
 
     private void insertTestData() {
         jdbcTemplate.execute("""
-                    INSERT INTO flight (flight_number, amount, departure_time, arrival_time, origin, destination, duration_in_minutes, carrier) VALUES
-                    ('AA101', 150.00, '2024-12-01 08:00:00', '2024-12-01 11:00:00', 'ICN', 'LAX', 180, 'American Airlines'),
-                    ('UA202', 200.00, '2024-12-01 09:00:00', '2024-12-01 13:00:00', 'ICN', 'ORD', 240, 'United Airlines'),
-                    ('DL303', 175.50, '2024-12-02 14:00:00', '2024-12-02 18:00:00', 'ICN', 'SEA', 240, 'Delta Airlines');
-                """);
+                INSERT INTO flight (flight_number, amount, departure_time, arrival_time, origin, destination, duration_in_minutes, carrier) VALUES
+                ('AA101', 150.00, '2024-12-01 08:00:00', '2024-12-01 11:00:00', 'ICN', 'LAX', 180, 'American Airlines'),
+                ('UA202', 200.00, '2024-12-01 09:00:00', '2024-12-01 13:00:00', 'ICN', 'ORD', 240, 'United Airlines'),
+                ('DL303', 175.50, '2024-12-02 14:00:00', '2024-12-02 18:00:00', 'ICN', 'SEA', 240, 'Delta Airlines');
+            """);
 
         jdbcTemplate.execute("""
-                    INSERT INTO booking (reference_code, booking_email, flight_id, payment_key, status, created_at) VALUES
-                    ('B1234', 'johndoe@example.com', 1, '456', 'CONFIRMED', '2023-11-25 14:30:00'),
-                    ('B1235', 'alice@example.com', 2, '457', 'CONFIRMED', '2023-11-26 09:00:00'),
-                    ('B1236', 'bob@example.com', 3, '458', 'PENDING', '2023-11-27 13:45:00');
-                """);
+                INSERT INTO booking (reference_code, booking_email, flight_id, payment_key, status, created_at) VALUES
+                ('B1234', 'johndoe@example.com', 1, '456', 'CONFIRMED', '2023-11-25 14:30:00'),
+                ('B1235', 'alice@example.com', 2, '457', 'CONFIRMED', '2023-11-26 09:00:00'),
+                ('B1236', 'bob@example.com', 3, '458', 'PENDING', '2023-11-27 13:45:00');
+            """);
 
         jdbcTemplate.execute("""
-                    INSERT INTO passenger (first_name, last_name, passport_number, gender, seat_number, date_of_birth, booking_id) VALUES
-                    ('John', 'Doe', 'A12345678', 'Male', '12A', '1995-05-26', 1),
-                    ('Jane', 'Doe', 'B98765432', 'Female', '12B', '1998-03-14', 1),
-                    ('Alice', 'Smith', 'C87654321', 'Female', '14A', '1992-08-15', 2);
-                """);
+                INSERT INTO passenger (first_name, last_name, passport_number, gender, seat_number, date_of_birth, booking_id) VALUES
+                ('John', 'Doe', 'A12345678', 'Male', '12A', '1995-05-26', 1),
+                ('Jane', 'Doe', 'B98765432', 'Female', '12B', '1998-03-14', 1),
+                ('Alice', 'Smith', 'C87654321', 'Female', '14A', '1992-08-15', 2);
+            """);
     }
 
     @Test

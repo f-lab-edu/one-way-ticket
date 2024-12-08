@@ -13,16 +13,12 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-
-@AutoConfigureTestDatabase(connection = EmbeddedDatabaseConnection.H2, replace = AutoConfigureTestDatabase.Replace.ANY)
-@TestPropertySource("classpath:application-test.yml")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class FlightControllerIntegrationTest {
 
@@ -46,17 +42,18 @@ public class FlightControllerIntegrationTest {
 
     private void resetDatabase() {
         jdbcTemplate.execute("TRUNCATE TABLE flight");
-        jdbcTemplate.execute("ALTER TABLE flight ALTER COLUMN id RESTART WITH 1");
+        jdbcTemplate.execute("ALTER TABLE flight AUTO_INCREMENT = 1");
     }
 
     private void insertTestData() {
         jdbcTemplate.execute("""
-                    INSERT INTO flight (flight_number, amount, departure_time, arrival_time, origin, destination, duration_in_minutes, carrier) VALUES
-                    ('AA101', 150.00, '2024-12-01 08:00:00', '2024-12-01 11:00:00', 'ICN', 'LAX', 180, 'American Airlines'),
-                    ('UA202', 200.00, '2024-12-01 09:00:00', '2024-12-01 13:00:00', 'ICN', 'ORD', 240, 'United Airlines'),
-                    ('DL303', 175.50, '2024-12-02 14:00:00', '2024-12-02 18:00:00', 'ICN', 'SEA', 240, 'Delta Airlines');
-                """);
+                INSERT INTO flight (flight_number, amount, departure_time, arrival_time, origin, destination, duration_in_minutes, carrier) VALUES
+                ('AA101', 150.00, '2024-12-01 08:00:00', '2024-12-01 11:00:00', 'ICN', 'LAX', 180, 'American Airlines'),
+                ('UA202', 200.00, '2024-12-01 09:00:00', '2024-12-01 13:00:00', 'ICN', 'ORD', 240, 'United Airlines'),
+                ('DL303', 175.50, '2024-12-02 14:00:00', '2024-12-02 18:00:00', 'ICN', 'SEA', 240, 'Delta Airlines');
+            """);
     }
+
 
     @Test
     @DisplayName("저렴한 순으로 상위 항공권 정보를 반환합니다.")
@@ -80,6 +77,7 @@ public class FlightControllerIntegrationTest {
         // Given
         String url = baseUrl + "/api/v1/flights/search?origin=ICN&destination=LAX&departureDate=2024-12-01&sort=price";
 
+        String jsonResponse = restTemplate.getForObject(url, String.class);
         // When
         ResponseEntity<FlightDto[]> response = restTemplate.getForEntity(url, FlightDto[].class);
 
