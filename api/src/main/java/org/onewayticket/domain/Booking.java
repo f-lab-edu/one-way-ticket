@@ -14,13 +14,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.onewayticket.dto.BookingRequestDto;
 import org.onewayticket.enums.BookingStatus;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Getter
@@ -47,10 +45,13 @@ public class Booking {
     private List<Passenger> passengers = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "VARCHAR(50)")
+
     private BookingStatus status;
 
     private LocalDateTime createdAt; // 예약 시간
 
+    public void updateStatus(BookingStatus bookingStatus) {
+        this.status = bookingStatus;
+    }
 
 }

@@ -13,7 +13,6 @@ import org.onewayticket.domain.Flight;
 import org.onewayticket.domain.Passenger;
 import org.onewayticket.enums.BookingStatus;
 import org.onewayticket.repository.BookingRepository;
-import org.onewayticket.security.TokenProvider;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 
@@ -36,8 +35,7 @@ public class BookingServiceTest {
 
     @Mock
     private FlightService flightService;
-    @Mock
-    private TokenProvider tokenProvider;
+
     @InjectMocks
     private BookingService bookingService;
 
@@ -96,22 +94,20 @@ public class BookingServiceTest {
     @DisplayName("토큰이 올바르다면 정상적으로 Booking을 취소할 수 있습니다.")
     void Cancel_booking_successfully() {
         // given
+        String referenceCode = "REF12345";
+        String bookingEmail = "test@example.com";
         Booking booking = Booking.builder()
-                .referenceCode("REF12345")
-                .bookingEmail("test@example.com")
+                .referenceCode(referenceCode)
+                .bookingEmail(bookingEmail)
                 .build();
+        String validToken = "2e27e2d2";
 
         Mockito.when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
-
-        // tokenProvider Mock 설정
-        Mockito.when(tokenProvider.generateToken("REF12345", "test@example.com"))
-                .thenReturn("VALID_TOKEN");
-
         // when
-        bookingService.cancelBooking("1", "VALID_TOKEN");
+        bookingService.cancelBooking("1", validToken);
 
         // then
-        Mockito.verify(bookingRepository, times(1)).delete(booking);
+        Mockito.verify(bookingRepository, times(1)).save(booking);
     }
 
 
@@ -125,8 +121,6 @@ public class BookingServiceTest {
                 .build();
 
         Mockito.when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
-        Mockito.when(tokenProvider.generateToken("REF12345", "test@example.com"))
-                .thenReturn("VALID_TOKEN");
 
         // when & then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
@@ -191,5 +185,4 @@ public class BookingServiceTest {
 
         assertTrue(exception.getMessage().contains("예약 정보를 찾을 수 없습니다."));
     }
-
 }

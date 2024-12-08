@@ -34,20 +34,14 @@ public class PaymentService {
     private final ObjectMapper objectMapper;
 
     public void tempSaveAmount(HttpSession session, PaymentRequestDto paymentRequestDto) {
-        System.out.println("session.toString() = " + session.toString());
-        System.out.println("paymentRequestDto = " + paymentRequestDto.orderId());
-        if(session == null){
+        if (session == null) {
             throw new IllegalStateException("세션이 만료되어 결제값을 저장할 수 없습니다.");
         }
         session.setAttribute(paymentRequestDto.orderId(), paymentRequestDto.amount());
     }
 
     public void verifyAmount(HttpSession session, PaymentRequestDto paymentRequestDto) {
-        System.out.println("session.toString() = " + session.toString());
-        System.out.println("paymentRequestDto = " + paymentRequestDto.orderId());
         String amount = (String) session.getAttribute(paymentRequestDto.orderId());
-        System.out.println("amount = " + amount);
-        System.out.println("paymentRequestDto.amount() = " + paymentRequestDto.amount());
         if (amount == null || !amount.equals(paymentRequestDto.amount())) {
             throw new IllegalArgumentException("결제 금액이 일치하지 않습니다.");
         }
@@ -132,7 +126,7 @@ public class PaymentService {
      * DB에서 결제 상태를 업데이트
      */
     public TossPayment updatePaymentStatus(TossPayment tossPayment) {
-        if(tossPayment.getPaymentStatus() == PaymentStatus.CANCELED){
+        if (tossPayment.getPaymentStatus() == PaymentStatus.CANCELED) {
             throw new IllegalStateException("이미 취소된 결제입니다.");
         }
         try {
