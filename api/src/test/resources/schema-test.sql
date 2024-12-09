@@ -1,3 +1,4 @@
+-- 테이블 생성
 CREATE TABLE IF NOT EXISTS booking (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     reference_code VARCHAR(255),
@@ -47,6 +48,5 @@ CREATE TABLE IF NOT EXISTS toss_payment (
 CREATE TABLE IF NOT EXISTS member (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(255) UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL
+    password VARCHAR(255) NOT NULL
 );

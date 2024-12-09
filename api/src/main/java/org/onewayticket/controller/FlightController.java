@@ -46,6 +46,3 @@ public class FlightController {
         return ResponseEntity.ok(FlightDto.from(flight));
     }
 }
-
-
-

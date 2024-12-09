@@ -1,7 +1,7 @@
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3307/test-db
+    url: jdbc:mysql://127.0.0.1:3307/test-db/
     schema: classpath:schema-test.sql
     username: testuser
     password: test1234
@@ -10,7 +10,7 @@ spring:
       mode: always
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: create
     show_sql: true
     properties:
       hibernate:
