@@ -170,7 +170,7 @@ class BookingControllerIntegrationTest {
 
         // When
         ResponseEntity<String> deleteResponse = restTemplate.exchange(deleteUrl, HttpMethod.DELETE, requestEntity, String.class);
-
+        System.out.println("deleteResponse.toString() = " + deleteResponse.toString());
         // Then (취소 응답 검증)
         assertEquals(HttpStatus.OK, deleteResponse.getStatusCode());
         assertNotNull(deleteResponse.getBody());

@@ -1,7 +1,6 @@
 package org.onewayticket.domain;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -31,6 +30,8 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private Long memberId;
+
     private String referenceCode; // 사용자 조회용 예약 번호
 
     private String bookingEmail;
@@ -45,7 +46,6 @@ public class Booking {
     private List<Passenger> passengers = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
-
     private BookingStatus status;
 
     private LocalDateTime createdAt; // 예약 시간

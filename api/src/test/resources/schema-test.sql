@@ -1,6 +1,7 @@
 -- 테이블 생성
 CREATE TABLE IF NOT EXISTS booking (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id BIGINT,
     reference_code VARCHAR(255),
     booking_email VARCHAR(255),
     flight_id BIGINT,
@@ -49,4 +50,12 @@ CREATE TABLE IF NOT EXISTS member (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(255) UNIQUE,
     password VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS wishlist (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,         -- Wishlist 고유 ID
+    member_id BIGINT NOT NULL,                    -- 사용자 ID
+    flight_id BIGINT NOT NULL,                    -- 항공편 ID
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 찜한 시간
+    UNIQUE (member_id, flight_id)                 -- 사용자와 항공편의 유니크 제약 조건
 );

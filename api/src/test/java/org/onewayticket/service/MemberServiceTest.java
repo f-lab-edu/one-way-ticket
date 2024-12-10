@@ -1,5 +1,6 @@
 package org.onewayticket.service;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,9 +10,8 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.onewayticket.domain.Member;
 import org.onewayticket.repository.MemberRepository;
-import org.onewayticket.security.PasswordUtil;
+import org.onewayticket.security.JwtUtil;
 
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 public class MemberServiceTest {
@@ -27,86 +26,74 @@ public class MemberServiceTest {
     @Mock
     private MemberRepository memberRepository;
 
+    @Mock
+    private JwtUtil jwtUtil;
+
     @InjectMocks
     private MemberService memberService;
 
-    @Test
-    @DisplayName("회원가입 성공")
-    void Register_Success() {
-        // Given
-        String username = "testuser";
-        String password = "password123";
-        Member mockMember = Member.builder()
-                .username(username)
-                .password(PasswordUtil.hashPassword(password))
-                .build();
+    private String validToken;
 
-        Mockito.when(memberRepository.save(Mockito.any(Member.class))).thenReturn(mockMember);
+    @BeforeEach
+    void setUp() {
+        validToken = jwtUtil.generateToken("testUser", 3600000); // 1시간 유효한 토큰
+    }
+
+    @Test
+    @DisplayName("유효한 토큰으로 사용자를 정상 조회")
+    void GetMyPageInfo_Success() {
+        // Given
+        Mockito.when(jwtUtil.getUsername(validToken)).thenReturn("testUser");
+        Mockito.when(memberRepository.findByUsername("testUser"))
+                .thenReturn(Optional.of(new Member(1L, "testUser", "password")));
 
         // When
-        Member result = memberService.register(username, password);
+        Member member = memberService.getMyPageInfo(validToken);
+
+        // Then
+        assertNotNull(member);
+        assertEquals("testUser", member.getUsername());
+    }
+
+    @Test
+    @DisplayName("토큰으로 조회 시 사용자 없음 예외 발생")
+    void GetMyPageInfo_UserNotFound() {
+        // Given
+        Mockito.when(jwtUtil.getUsername(validToken)).thenReturn("testUser");
+        Mockito.when(memberRepository.findByUsername("testUser")).thenReturn(Optional.empty());
+
+        // When & Then
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> memberService.getMyPageInfo(validToken));
+        assertTrue(exception.getMessage().contains("사용자를 찾을 수 없습니다."));
+    }
+
+    @Test
+    @DisplayName("회원 ID로 사용자 조회 성공")
+    void GetMemberById_Success() {
+        // Given
+        Long memberId = 1L;
+        Member member = new Member(memberId, "testUser", "password");
+
+        Mockito.when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
+
+        // When
+        Member result = memberService.getMemberById(memberId);
 
         // Then
         assertNotNull(result);
-        assertEquals(username, result.getUsername());
-        Mockito.verify(memberRepository, times(1)).save(Mockito.any(Member.class));
+        assertEquals(memberId, result.getId());
     }
 
     @Test
-    @DisplayName("로그인 성공")
-    void Authenticate_Success() {
+    @DisplayName("회원 ID로 사용자 조회 실패")
+    void GetMemberById_UserNotFound() {
         // Given
-        String username = "testuser";
-        String password = "password123";
-        Member mockMember = Member.builder()
-                .username(username)
-                .password(PasswordUtil.hashPassword(password))
-                .build();
+        Long memberId = 1L;
 
-        Mockito.when(memberRepository.findByUsername(username)).thenReturn(Optional.of(mockMember));
-
-        // When
-        Map<String, String> result = memberService.authenticate(username, password);
-
-        // Then
-        assertNotNull(result);
-        assertTrue(result.containsKey("token"));
-        Mockito.verify(memberRepository, times(1)).findByUsername(username);
-    }
-
-    @Test
-    @DisplayName("로그인 실패 - 회원 없음")
-    void Authenticate_Fail_UserNotFound() {
-        // Given
-        String username = "nonexistentuser";
-        String password = "password123";
-
-        Mockito.when(memberRepository.findByUsername(username)).thenReturn(Optional.empty());
+        Mockito.when(memberRepository.findById(memberId)).thenReturn(Optional.empty());
 
         // When & Then
-        NoSuchElementException exception = assertThrows(NoSuchElementException.class,
-                () -> memberService.authenticate(username, password));
-        assertEquals("회원을 찾을 수 없습니다.", exception.getMessage());
-    }
-
-    @Test
-    @DisplayName("로그인 실패 - 비밀번호 불일치")
-    void Authenticate_Fail_InvalidPassword() {
-        // Given
-        String username = "testuser";
-        String password = "password123";
-        String wrongPassword = "wrongpassword";
-
-        Member mockMember = Member.builder()
-                .username(username)
-                .password(PasswordUtil.hashPassword(password))
-                .build();
-
-        Mockito.when(memberRepository.findByUsername(username)).thenReturn(Optional.of(mockMember));
-
-        // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> memberService.authenticate(username, wrongPassword));
-        assertEquals("아이디 비밀번호가 올바르지 않습니다.", exception.getMessage());
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> memberService.getMemberById(memberId));
+        assertTrue(exception.getMessage().contains("사용자를 찾을 수 없습니다."));
     }
 }

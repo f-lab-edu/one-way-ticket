@@ -13,6 +13,7 @@ import org.onewayticket.domain.Flight;
 import org.onewayticket.domain.Passenger;
 import org.onewayticket.enums.BookingStatus;
 import org.onewayticket.repository.BookingRepository;
+import org.onewayticket.security.JwtUtil;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 
@@ -35,6 +36,9 @@ public class BookingServiceTest {
 
     @Mock
     private FlightService flightService;
+
+    @Mock
+    private JwtUtil jwtUtil;
 
     @InjectMocks
     private BookingService bookingService;
@@ -162,7 +166,7 @@ public class BookingServiceTest {
         Mockito.when(flightService.getFlightDetails("1")).thenReturn(flight);
 
         // when
-        BookingDetail result = bookingService.getBookingDetails("REF12345");
+        BookingDetail result = bookingService.getBookingDetailsByReferenceCode("REF12345");
 
         // then
         assertNotNull(result);
@@ -180,7 +184,7 @@ public class BookingServiceTest {
 
         // when & then
         NoSuchElementException exception = assertThrows(NoSuchElementException.class, () ->
-                bookingService.getBookingDetails("INVALID_REF")
+                bookingService.getBookingDetailsByReferenceCode("INVALID_REF")
         );
 
         assertTrue(exception.getMessage().contains("예약 정보를 찾을 수 없습니다."));
