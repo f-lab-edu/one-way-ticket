@@ -3,4 +3,3 @@ plugins {
 }
 rootProject.name = 'one-way-ticket'
 include 'api'
-

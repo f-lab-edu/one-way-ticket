@@ -35,7 +35,6 @@ public class FlightController {
             @RequestParam("destination") @NotNull String destination,
             @RequestParam("departureDate") @NotNull String departureDate,
             @RequestParam(value = "sort", defaultValue = "price") @NotNull String sort) {
-
         List<Flight> flightList = flightService.searchFlights(origin, destination, departureDate, sort);
         return ResponseEntity.ok(FlightDto.from(flightList));
     }
@@ -47,6 +46,3 @@ public class FlightController {
         return ResponseEntity.ok(FlightDto.from(flight));
     }
 }
-
-
-

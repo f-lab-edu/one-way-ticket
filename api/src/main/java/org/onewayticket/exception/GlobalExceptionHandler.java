@@ -62,7 +62,6 @@ public class GlobalExceptionHandler {
         return buildErrorResponse("Invalid JSON format", HttpStatus.BAD_REQUEST, errors);
     }
 
-
     @ExceptionHandler(DataAccessException.class)
     public ResponseEntity<Map<String, Object>> handleCustomDatabaseException(DataAccessException ex) {
         return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, null);

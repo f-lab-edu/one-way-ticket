@@ -10,7 +10,6 @@ import org.onewayticket.dto.PaymentConfirmRequestDto;
 import org.onewayticket.dto.PaymentRequestDto;
 import org.onewayticket.dto.PaymentResponseDto;
 import org.onewayticket.service.PaymentService;
-import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -62,13 +61,11 @@ public class TossPaymentController {
      */
     @PostMapping("/cancel")
     public ResponseEntity<?> cancelPayment(@RequestParam @NotNull String paymentKey, @RequestParam @NotNull String cancelReason) {
-           // 결제 취소 요청
-           TossPayment tossPayment = paymentService.cancelPayment(paymentKey, cancelReason);
-           // DB 상태 업데이트
-           TossPayment updatedPayment = paymentService.updatePaymentStatus(tossPayment);
-           return ResponseEntity.ok(PaymentResponseDto.from(updatedPayment));
-
+        // 결제 취소 요청
+        TossPayment tossPayment = paymentService.cancelPayment(paymentKey, cancelReason);
+        // DB 상태 업데이트
+        TossPayment updatedPayment = paymentService.updatePaymentStatus(tossPayment);
+        return ResponseEntity.ok(PaymentResponseDto.from(updatedPayment));
     }
-
 
 }
