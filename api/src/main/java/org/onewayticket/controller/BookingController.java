@@ -1,25 +1,24 @@
 package org.onewayticket.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.onewayticket.domain.Booking;
-import org.onewayticket.domain.BookingResponse;
+import org.onewayticket.domain.BookingDetail;
 import org.onewayticket.dto.BookingDetailsDto;
 import org.onewayticket.dto.BookingRequestDto;
-import org.onewayticket.dto.BookingResponseDto;
 import org.onewayticket.dto.PassengerDto;
 import org.onewayticket.security.JwtUtil;
 import org.onewayticket.service.BookingService;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,44 +40,43 @@ public class BookingController {
                                                  @NotNull @RequestParam String flightId) {
         Booking booking = bookingService.createBooking(bookingRequestInfo.bookingEmail(), PassengerDto.from(bookingRequestInfo.passengers()), bookingRequestInfo.paymentKey(), Long.parseLong(flightId));
         return ResponseEntity.status(HttpStatus.CREATED).body(booking);
-
     }
 
-    @GetMapping("/list")
-    public ResponseEntity<?> getBookingDetailsList(@RequestHeader("Authorization") String header) {
-        String token = jwtUtil.extractTokenFromHeader(header);
-        List<BookingDetailsDto> bookingDetailsDtoList = BookingDetailsDto.fromList(bookingService.getBookingDetailsList(header));
+    @GetMapping
+    public ResponseEntity<?> getBookingDetailsList(HttpServletRequest request) {
+        String username = (String) request.getAttribute("username");
+        List<BookingDetailsDto> bookingDetailsDtoList = BookingDetailsDto.fromList(bookingService.getBookingDetailsList(username));
         return ResponseEntity.ok(bookingDetailsDtoList);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getBookingDetailsForMember(@PathVariable @NotNull Long id, @RequestHeader("Authorization") String header) {
-        String token = jwtUtil.extractTokenFromHeader(header);
-        BookingDetailsDto bookingDetailsDto = BookingDetailsDto.from(bookingService.getBookingDetailsForUser(id, token));
+    public ResponseEntity<?> getBookingDetailsForMember(@PathVariable @NotNull Long id, HttpServletRequest request) {
+        String username = (String) request.getAttribute("username");
+        BookingDetailsDto bookingDetailsDto = BookingDetailsDto.from(bookingService.getBookingDetailsForUser(id, username));
         return ResponseEntity.ok(bookingDetailsDto);
     }
 
-    @GetMapping
-    public ResponseEntity<BookingResponseDto> getBookingDetailsByReference(
+    @GetMapping("/guest")
+    public ResponseEntity<BookingDetailsDto> getBookingDetailsByReference(
             @RequestParam("referenceCode") @NotNull String referenceCode,
             @RequestParam("bookingEmail") @NotNull String bookingEmail) {
+        BookingDetail bookingDetail = bookingService.getBookingDetailsByReferenceCode(referenceCode);
+        String token = jwtUtil.generateToken(bookingEmail, 15 * 60 * 1000);
 
-        BookingResponse bookingResponse = bookingService.getBookingResponse(referenceCode, bookingEmail);
-        // record 인스턴스 생성
-        BookingResponseDto responseDto = BookingResponseDto.from(bookingResponse);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer " + token);
 
-        // DTO 반환
-        return ResponseEntity.ok(responseDto);
+        return ResponseEntity.ok().headers(headers).body(BookingDetailsDto.from(bookingDetail));
     }
 
     // 예약 취소(회원, 비회원 통합)
-    @DeleteMapping("/{id}")
+    @PostMapping("/{id}")
     public ResponseEntity<String> cancelBooking(
             @PathVariable @NotNull String id,
-            @RequestHeader(value = "Authorization", required = true) @NotNull String header) {
-        String token = jwtUtil.extractTokenFromHeader(header);
-        bookingService.cancelBooking(id, token);
-        return ResponseEntity.ok("Booking with ID " + id + " has been canceled successfully.");
+            HttpServletRequest request) {
+        String username = (String) request.getAttribute("username");
+        bookingService.cancelBooking(id, username);
+        return ResponseEntity.ok("해당 예약이 취소되었습니다.");
     }
 
 }

@@ -7,9 +7,8 @@ import org.onewayticket.dto.BookingDetailsDto;
 import org.onewayticket.dto.BookingRequestDto;
 import org.onewayticket.dto.BookingResponseDto;
 import org.onewayticket.dto.PassengerDto;
+import org.onewayticket.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.jdbc.EmbeddedDatabaseConnection;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -37,6 +36,9 @@ class BookingControllerIntegrationTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     private String baseUrl;
 
     @BeforeEach
@@ -51,33 +53,40 @@ class BookingControllerIntegrationTest {
         jdbcTemplate.execute("TRUNCATE TABLE passenger");
         jdbcTemplate.execute("TRUNCATE TABLE booking");
         jdbcTemplate.execute("TRUNCATE TABLE flight");
+        jdbcTemplate.execute("TRUNCATE TABLE member");
         jdbcTemplate.execute("ALTER TABLE passenger AUTO_INCREMENT = 1");
         jdbcTemplate.execute("ALTER TABLE booking AUTO_INCREMENT = 1");
         jdbcTemplate.execute("ALTER TABLE flight AUTO_INCREMENT = 1");
+        jdbcTemplate.execute("ALTER TABLE member AUTO_INCREMENT = 1");
         jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
     }
 
     private void insertTestData() {
         jdbcTemplate.execute("""
-                INSERT INTO flight (flight_number, amount, departure_time, arrival_time, origin, destination, duration_in_minutes, carrier) VALUES
-                ('AA101', 150.00, '2024-12-01 08:00:00', '2024-12-01 11:00:00', 'ICN', 'LAX', 180, 'American Airlines'),
-                ('UA202', 200.00, '2024-12-01 09:00:00', '2024-12-01 13:00:00', 'ICN', 'ORD', 240, 'United Airlines'),
-                ('DL303', 175.50, '2024-12-02 14:00:00', '2024-12-02 18:00:00', 'ICN', 'SEA', 240, 'Delta Airlines');
-            """);
+                    INSERT INTO flight (flight_number, amount, departure_time, arrival_time, origin, destination, duration_in_minutes, carrier) VALUES
+                    ('AA101', 150.00, '2024-12-01 08:00:00', '2024-12-01 11:00:00', 'ICN', 'LAX', 180, 'American Airlines'),
+                    ('UA202', 200.00, '2024-12-01 09:00:00', '2024-12-01 13:00:00', 'ICN', 'ORD', 240, 'United Airlines'),
+                    ('DL303', 175.50, '2024-12-02 14:00:00', '2024-12-02 18:00:00', 'ICN', 'SEA', 240, 'Delta Airlines');
+                """);
 
         jdbcTemplate.execute("""
-                INSERT INTO booking (reference_code, booking_email, flight_id, payment_key, status, created_at) VALUES
-                ('B1234', 'johndoe@example.com', 1, '456', 'CONFIRMED', '2023-11-25 14:30:00'),
-                ('B1235', 'alice@example.com', 2, '457', 'CONFIRMED', '2023-11-26 09:00:00'),
-                ('B1236', 'bob@example.com', 3, '458', 'PENDING', '2023-11-27 13:45:00');
-            """);
+                    INSERT INTO booking (member_id, reference_code, booking_email, flight_id, payment_key, status, created_at) VALUES
+                    (1, 'B1234', 'johndoe@example.com', 1, '456', 'CONFIRMED', '2023-11-25 14:30:00'),
+                    (2, 'B1235', 'alice@example.com', 2, '457', 'CONFIRMED', '2023-11-26 09:00:00'),
+                    (3, 'B1236', 'bob@example.com', 3, '458', 'PENDING', '2023-11-27 13:45:00');
+                """);
 
         jdbcTemplate.execute("""
-                INSERT INTO passenger (first_name, last_name, passport_number, gender, seat_number, date_of_birth, booking_id) VALUES
-                ('John', 'Doe', 'A12345678', 'Male', '12A', '1995-05-26', 1),
-                ('Jane', 'Doe', 'B98765432', 'Female', '12B', '1998-03-14', 1),
-                ('Alice', 'Smith', 'C87654321', 'Female', '14A', '1992-08-15', 2);
-            """);
+                    INSERT INTO passenger (first_name, last_name, passport_number, gender, seat_number, date_of_birth, booking_id) VALUES
+                    ('John', 'Doe', 'A12345678', 'Male', '12A', '1995-05-26', 1),
+                    ('Jane', 'Doe', 'B98765432', 'Female', '12B', '1998-03-14', 1),
+                    ('Alice', 'Smith', 'C87654321', 'Female', '14A', '1992-08-15', 2);
+                """);
+
+        jdbcTemplate.execute("""
+                    INSERT INTO member (username, password) VALUES
+                    ('johndoe@example.com', '1234')
+                """);
     }
 
     @Test
@@ -108,7 +117,7 @@ class BookingControllerIntegrationTest {
         BookingRequestDto request = new BookingRequestDto(
                 "john.doe@example.com",
                 List.of(new PassengerDto("John", "Doe", "1995-05-01", "M34993022", "male", "12A")),
-                "" // Invalid Payment ID
+                "" // payment ID 누락
         );
 
         // When
@@ -119,25 +128,67 @@ class BookingControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("기존 예약 고객은 예약번호, 이메일, 항공편 정보를 통해 예약정보를 조회할 수 있습니다.")
-    void getBookingDetailsWithValidInfo() {
+    @DisplayName("회원은 현재 예약 목록을 조회할 수 있습니다.")
+    void getBookingDetailsList() {
         // Given
-        String url = baseUrl + "/api/v1/bookings?referenceCode=B1234&bookingEmail=johndoe@example.com";
+        String username = "johndoe@example.com";
+        String url = baseUrl + "/api/v1/bookings";
+        String token = jwtUtil.generateToken(username, 60 * 10 * 1000);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + token);
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
         // When
-        ResponseEntity<BookingResponseDto> response = restTemplate.getForEntity(url, BookingResponseDto.class);
+        ResponseEntity<BookingDetailsDto[]> response = restTemplate.exchange(url, HttpMethod.GET, requestEntity, BookingDetailsDto[].class);
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(1, response.getBody().length);
+    }
+
+    @Test
+    @DisplayName("회원은 자신이 예약한 특정 예약의 상세정보를 확인할 수 있습니다.")
+    void getBookingDetailsForMember() {
+        // Given
+        Long bookingId = 1L;
+        String username = "johndoe@example.com";
+        String url = baseUrl + "/api/v1/bookings/" + bookingId;
+        String token = jwtUtil.generateToken(username, 60 * 10 * 1000);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + token);
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+        // When
+        ResponseEntity<BookingDetailsDto> response = restTemplate.exchange(url, HttpMethod.GET, requestEntity, BookingDetailsDto.class);
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals("B1234", response.getBody().bookingDetails().referenceCode());
+    }
+
+    @Test
+    @DisplayName("기존 예약 고객은 예약번호, 이메일, 항공편 정보를 통해 예약정보를 조회할 수 있습니다.")
+    void getBookingDetailsWithValidInfo() {
+        // Given
+        String url = baseUrl + "/api/v1/bookings/guest?referenceCode=B1234&bookingEmail=johndoe@example.com";
+
+        // When
+        ResponseEntity<BookingDetailsDto> response = restTemplate.getForEntity(url, BookingDetailsDto.class);
+
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertNotNull(response.getHeaders().getFirst("Authorization"));
+        assertEquals("B1234", response.getBody().referenceCode());
     }
 
     @Test
     @DisplayName("존재하지 않는 예약 정보로 조회할 때는 404를 반환합니다.")
     void Get_bookingDetails_with_invalid_info_not_found() {
         // Given
-        String url = baseUrl + "/api/v1/bookings?referenceCode=B12345&bookingEmail=\"johndoe@example.com\"";
+        String url = baseUrl + "/api/v1/bookings/guest?referenceCode=B12345&bookingEmail=\"johndoe@example.com\"";
 
         // When
         ResponseEntity<?> response = restTemplate.getForEntity(url, BookingResponseDto.class);
@@ -147,35 +198,23 @@ class BookingControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("기존 예약 고객은 예약번호, 이메일, 항공편 정보를 통해 예약정보를 조회하고 취소할 수 있습니다.")
-    void Get_and_Delete_booking_with_token() {
-        // 예약 정보 조회 및 토큰 발급
-        // Given
-        String referenceCode = "B1234";
-        String bookingEmail = "johndoe@example.com";
-        String getUrl = baseUrl + "/api/v1/bookings?referenceCode=" + referenceCode + "&bookingEmail=" + bookingEmail;
-
-        // When
-        ResponseEntity<BookingResponseDto> getResponse = restTemplate.getForEntity(getUrl, BookingResponseDto.class);
-
-        String token = getResponse.getBody().token(); // 토큰 저장
-
-        // 예약 취소
+    @DisplayName("예약 취소 API 요청이 성공적으로 처리됩니다.")
+    void cancelBookingWithValidData() {
         // Given
         String bookingId = "1";
-        String deleteUrl = baseUrl + "/api/v1/bookings/" + bookingId;
+        String username = "johndoe@example.com";
+        String url = baseUrl + "/api/v1/bookings/" + bookingId;
+        String token = jwtUtil.generateToken(username, 60 * 10 * 1000);
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", token);
+        headers.set("Authorization", "Bearer " + token);
         HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
         // When
-        ResponseEntity<String> deleteResponse = restTemplate.exchange(deleteUrl, HttpMethod.DELETE, requestEntity, String.class);
-        System.out.println("deleteResponse.toString() = " + deleteResponse.toString());
-        // Then (취소 응답 검증)
-        assertEquals(HttpStatus.OK, deleteResponse.getStatusCode());
-        assertNotNull(deleteResponse.getBody());
+        ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("해당 예약이 취소되었습니다.", response.getBody());
     }
-
 }
 
 

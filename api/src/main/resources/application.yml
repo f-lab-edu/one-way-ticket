@@ -8,6 +8,7 @@ spring:
   sql:
     init:
       mode: always
+      schema-location: classpath:schema.sql
   jpa:
     hibernate:
       ddl-auto: validate

@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.onewayticket.domain.Booking;
 import org.onewayticket.domain.BookingDetail;
 import org.onewayticket.domain.Flight;
+import org.onewayticket.domain.Member;
 import org.onewayticket.domain.Passenger;
 import org.onewayticket.enums.BookingStatus;
 import org.onewayticket.repository.BookingRepository;
@@ -36,6 +37,9 @@ public class BookingServiceTest {
 
     @Mock
     private FlightService flightService;
+
+    @Mock
+    private MemberService memberService;
 
     @Mock
     private JwtUtil jwtUtil;
@@ -95,20 +99,80 @@ public class BookingServiceTest {
     }
 
     @Test
-    @DisplayName("토큰이 올바르다면 정상적으로 Booking을 취소할 수 있습니다.")
+    @DisplayName("사용자는 자신의 예약 목록을 정상적으로 조회할 수 있습니다.")
+    void Get_Booking_Details_List_Successfully() {
+        // Given
+        String username = "test@example.com";
+        Member member = new Member(1L, username, "password");
+        Booking booking = Booking.builder()
+                .referenceCode("REF12345")
+                .bookingEmail(username)
+                .flightId(1L)
+                .paymentKey("PAYMENT123")
+                .passengers(List.of(Passenger.builder().firstName("SEONGHUN").lastName("KOO").build()))
+                .status(BookingStatus.COMPLETED)
+                .build();
+
+        Mockito.when(memberService.getMemberByUsername(username)).thenReturn(member);
+        Mockito.when(bookingRepository.findAllByMemberId(1L)).thenReturn(List.of(booking));
+        Mockito.when(flightService.getFlightDetails("1")).thenReturn(Flight.builder().id(1L).build());
+
+        // When
+        List<BookingDetail> bookingDetails = bookingService.getBookingDetailsList(username);
+
+        // Then
+        assertNotNull(bookingDetails);
+        assertEquals(1, bookingDetails.size());
+
+        Mockito.verify(memberService, times(1)).getMemberByUsername(username);
+        Mockito.verify(bookingRepository, times(1)).findAllByMemberId(1L);
+    }
+
+    @Test
+    @DisplayName("사용자는 자신의 예약 정보를 정상적으로 조회할 수 있습니다.")
+    void Get_Booking_Details_For_User_Successfully() {
+        // Given
+        Long bookingId = 1L;
+        String username = "test@example.com";
+        Booking booking = Booking.builder()
+                .id(1L)
+                .referenceCode("REF12345")
+                .bookingEmail(username)
+                .flightId(1L)
+                .paymentKey("PAYMENT123")
+                .passengers(List.of(Passenger.builder().firstName("SEONGHUN").lastName("KOO").build()))
+                .status(BookingStatus.COMPLETED)
+                .build();
+
+
+        Mockito.when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
+        Mockito.when(flightService.getFlightDetails("1")).thenReturn(Flight.builder().id(1L).build());
+
+        // When
+        BookingDetail bookingDetail = bookingService.getBookingDetailsForUser(bookingId, username);
+
+        // Then
+        assertNotNull(bookingDetail);
+        assertEquals(bookingId, bookingDetail.getBookingId());
+
+        Mockito.verify(bookingRepository, times(1)).findById(bookingId);
+        Mockito.verify(flightService, times(1)).getFlightDetails("1");
+    }
+
+
+    @Test
+    @DisplayName("예약 취소자가 예약자와 동일하다면 정상적으로 Booking을 취소 상태로 변경할 수 있습니다.")
     void Cancel_booking_successfully() {
         // given
-        String referenceCode = "REF12345";
         String bookingEmail = "test@example.com";
         Booking booking = Booking.builder()
-                .referenceCode(referenceCode)
                 .bookingEmail(bookingEmail)
                 .build();
-        String validToken = "2e27e2d2";
 
         Mockito.when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
         // when
-        bookingService.cancelBooking("1", validToken);
+        bookingService.cancelBooking("1", booking.getBookingEmail());
 
         // then
         Mockito.verify(bookingRepository, times(1)).save(booking);
@@ -116,11 +180,10 @@ public class BookingServiceTest {
 
 
     @Test
-    @DisplayName("유효하지 않은 토큰을 넣으면 토큰 유효 Exception이 반환됩니다.")
+    @DisplayName("예약자와 예약 취소자가 다르면 Exception이 반환됩니다.")
     void Cancel_booking_with_invalid_token() {
         // given
         Booking booking = Booking.builder()
-                .referenceCode("REF12345")
                 .bookingEmail("test@example.com")
                 .build();
 
@@ -128,10 +191,10 @@ public class BookingServiceTest {
 
         // when & then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                bookingService.cancelBooking("1", "INVALID_TOKEN")
+                bookingService.cancelBooking("1", "INVALID_USER")
         );
 
-        assertTrue(exception.getMessage().contains("유효하지 않은 토큰입니다."));
+        assertTrue(exception.getMessage().contains("로그인한 사용자와 예약자가 일치하지 않습니다."));
     }
 
     @Test
@@ -142,7 +205,7 @@ public class BookingServiceTest {
 
         // when & then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                bookingService.cancelBooking("1", "VALID_TOKEN")
+                bookingService.cancelBooking("1", "ANYBODY")
         );
 
         assertTrue(exception.getMessage().contains("해당 예약 정보가 없습니다."));
@@ -189,4 +252,6 @@ public class BookingServiceTest {
 
         assertTrue(exception.getMessage().contains("예약 정보를 찾을 수 없습니다."));
     }
+
+
 }

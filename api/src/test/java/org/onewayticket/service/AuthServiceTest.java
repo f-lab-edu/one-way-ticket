@@ -12,14 +12,12 @@ import org.onewayticket.repository.MemberRepository;
 import org.onewayticket.security.JwtUtil;
 import org.onewayticket.security.PasswordUtil;
 
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
@@ -71,11 +69,10 @@ public class AuthServiceTest {
         Mockito.when(jwtUtil.generateToken(username, 24 * 60 * 60 * 1000)).thenReturn("mocked-token"); // Mock 설정
 
         // When
-        Map<String, String> result = authService.authenticate(username, password);
+        String result = authService.authenticate(username, password);
 
         // Then
         assertNotNull(result);
-        assertTrue(result.containsKey("token"));
         Mockito.verify(memberRepository, times(1)).findByUsername(username);
     }
 

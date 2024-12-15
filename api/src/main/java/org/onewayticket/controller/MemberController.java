@@ -1,12 +1,11 @@
 package org.onewayticket.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.onewayticket.dto.MyPageDto;
-import org.onewayticket.security.JwtUtil;
 import org.onewayticket.service.MemberService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,12 +14,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class MemberController {
     private final MemberService memberService;
-    private final JwtUtil jwtUtil;
 
     @GetMapping("/info")
-    public ResponseEntity<?> getMyPage(@RequestHeader("Authorization") String header) {
-        String token = jwtUtil.extractTokenFromHeader(header);
-        MyPageDto myPageDto = MyPageDto.from(memberService.getMyPageInfo(token));
+    public ResponseEntity<?> getMyPage(HttpServletRequest request) {
+        String username = (String) request.getAttribute("username");
+        MyPageDto myPageDto = MyPageDto.from(memberService.getMyPageInfo(username));
         return ResponseEntity.ok(myPageDto);
     }
 

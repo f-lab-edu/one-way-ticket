@@ -1,30 +1,29 @@
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://owt-mysql-db:3306/my-db
+      SPRING_DATASOURCE_USERNAME: tester
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
   db:
     image: mysql:8.3.0
     container_name: owt-mysql-db
     ports:
       - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: 1234
       MYSQL_DATABASE: my-db
+      MYSQL_ROOT_PASSWORD: 1234
       MYSQL_USER: tester
       MYSQL_PASSWORD: 1234
     volumes:
       - db-data:/var/lib/mysql
 
-  db_test:
-    image: mysql:8.3.0
-    container_name: owt-mysql-db-test
-    ports:
-      - "3307:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: test1234
-      MYSQL_DATABASE: test-db
-      MYSQL_USER: testuser
-      MYSQL_PASSWORD: test1234
-    volumes:
-      - db-test-data:/var/lib/mysql
-
 volumes:
   db-data:
-  db-test-data:

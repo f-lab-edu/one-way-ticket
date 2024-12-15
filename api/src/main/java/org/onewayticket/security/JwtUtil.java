@@ -2,6 +2,7 @@ package org.onewayticket.security;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Mac;
@@ -10,9 +11,10 @@ import java.util.Base64;
 import java.util.Map;
 
 @Component
+@RequiredArgsConstructor
 public class JwtUtil {
-
     private static final String SECRET_KEY = "MY-SECRET-KEY";
+    public final ObjectMapper objectMapper;
 
     public String generateToken(String username, long expirationMillis) {
         long nowMillis = System.currentTimeMillis();
@@ -25,17 +27,15 @@ public class JwtUtil {
         return header + "." + payload + "." + signature;
     }
 
-    public boolean isJwtToken(String token) {
-        return token.split("\\.").length == 3;
-    }
-
     public boolean validateToken(String token) {
         try {
             String[] parts = splitToken(token);
             String headerPayload = parts[0] + "." + parts[1];
             String signature = createSignature(headerPayload, SECRET_KEY);
 
-            if (!signature.equals(parts[2])) return false;
+            if (!signature.equals(parts[2])) {
+                return false;
+            }
 
             Map<String, Object> payloadMap = parsePayload(parts[1]);
             long exp = ((Number) payloadMap.get("exp")).longValue();
@@ -46,11 +46,10 @@ public class JwtUtil {
     }
 
     public String extractTokenFromHeader(String authorizationHeader) {
-        if (authorizationHeader == null) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             throw new IllegalArgumentException("유효한 토큰이 필요합니다.");
         }
-        if (authorizationHeader.startsWith("Bearer ")) return authorizationHeader.substring(7);
-        return authorizationHeader;
+        return authorizationHeader.substring(7);
     }
 
     public String getUsername(String token) {
@@ -74,8 +73,7 @@ public class JwtUtil {
     private Map<String, Object> parsePayload(String payload) {
         try {
             String decodedPayload = new String(Base64.getUrlDecoder().decode(payload));
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.readValue(decodedPayload, new TypeReference<>() {
+            return objectMapper.readValue(decodedPayload, new TypeReference<>() {
             });
         } catch (Exception e) {
             throw new RuntimeException("페이로드 파싱 실패", e);

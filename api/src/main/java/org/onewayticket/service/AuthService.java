@@ -7,8 +7,6 @@ import org.onewayticket.security.JwtUtil;
 import org.onewayticket.security.PasswordUtil;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 @Service
@@ -22,26 +20,22 @@ public class AuthService {
             throw new IllegalArgumentException("아이디 형식을 확인해주세요.");
         }
 
-        if (password.length() < 8) {
-            throw new IllegalArgumentException("비밀번호가 너무 짧습니다..");
-        }
-
+        String hashedPassword = PasswordUtil.hashPassword(password);
         Member member = Member.builder()
                 .username(username)
-                .password(PasswordUtil.hashPassword(password))
+                .password(hashedPassword)
                 .build();
 
         return memberRepository.save(member);
     }
 
 
-    public Map<String, String> authenticate(String username, String password) {
+    public String authenticate(String username, String password) {
         Member member = memberRepository.findByUsername(username).orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다."));
-        if (member != null && member.getPassword().equals(PasswordUtil.hashPassword(password))) {
-            String token = jwtUtil.generateToken(member.getUsername(), 24 * 60 * 60 * 1000);
-            return new HashMap<>() {{
-                put("token", token);
-            }};
+
+        if (PasswordUtil.verifyPassword(password, member.getPassword())) {
+            // 비밀번호가 일치하면 토큰 생성
+            return jwtUtil.generateToken(member.getUsername(), 24 * 60 * 60 * 1000);
         }
         throw new IllegalArgumentException("아이디 비밀번호가 올바르지 않습니다.");
     }

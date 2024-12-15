@@ -3,7 +3,6 @@ package org.onewayticket.service;
 import lombok.RequiredArgsConstructor;
 import org.onewayticket.domain.Booking;
 import org.onewayticket.domain.BookingDetail;
-import org.onewayticket.domain.BookingResponse;
 import org.onewayticket.domain.Flight;
 import org.onewayticket.domain.Member;
 import org.onewayticket.domain.Passenger;
@@ -16,10 +15,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.zip.CRC32;
 
 @Service
 @RequiredArgsConstructor
@@ -49,40 +46,21 @@ public class BookingService {
         return new BookingDetail(booking, flight);
     }
 
-    // 토큰 포함된 Response를 반환하기 위한 메서드
-    public BookingResponse getBookingResponse(String referenceCode, String email) {
-        String token = generateToken(referenceCode, email);
-        BookingDetail bookingDetail = getBookingDetailsByReferenceCode(referenceCode);
-        return new BookingResponse(bookingDetail, token);
-    }
-
-    public List<BookingDetail> getBookingDetailsList(String token) {
-        if (!jwtUtil.validateToken(token)) {
-            throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
-        }
-
-        String usernameFromToken = jwtUtil.getUsername(token);
-
-        Member member = memberService.getMemberByUsername(usernameFromToken);
+    public List<BookingDetail> getBookingDetailsList(String username) {
+        Member member = memberService.getMemberByUsername(username);
         List<Booking> bookings = bookingRepository.findAllByMemberId(member.getId());
-
         return bookings.stream().map(booking -> {
             Flight flight = flightService.getFlightDetails(booking.getFlightId().toString());
             return new BookingDetail(booking, flight);
         }).toList();
     }
 
-    public BookingDetail getBookingDetailsForUser(Long bookingId, String token) {
-        if (!jwtUtil.validateToken(token)) {
-            throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
-        }
-
+    public BookingDetail getBookingDetailsForUser(Long bookingId, String username) {
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> new NoSuchElementException("예약 정보를 찾을 수 없습니다."));
         Flight flight = flightService.getFlightDetails(booking.getFlightId().toString());
 
-        String usernameFromToken = jwtUtil.getUsername(token);
-        String usernameInBooking = memberService.getMemberById(booking.getMemberId()).getUsername();
-        if (!usernameInBooking.equals(usernameFromToken)) {
+        String usernameInBooking = booking.getBookingEmail();
+        if (!usernameInBooking.equals(username)) {
             throw new IllegalArgumentException("로그인한 사용자와 예약자가 일치하지 않습니다.");
         }
 
@@ -90,47 +68,13 @@ public class BookingService {
     }
 
     @Transactional
-    public void cancelBooking(String id, String token) {
+    public void cancelBooking(String id, String username) {
         Booking booking = bookingRepository.findById(Long.valueOf(id)).orElseThrow(() -> new IllegalArgumentException("해당 예약 정보가 없습니다."));
 
-        if (jwtUtil.isJwtToken(token)) {
-            cancelBookingForMember(booking, token);
-        } else {
-            cancelBookingForGuest(booking, token);
-        }
-    }
+        String usernameInBooking = booking.getBookingEmail();
 
-    /**
-     * 예약번호와 이메일 기반으로 해시 토큰 생성
-     */
-    private String generateToken(String reservationNumber, String email) {
-        String data = reservationNumber + email;
-        CRC32 crc32 = new CRC32();
-        crc32.update(data.getBytes(StandardCharsets.UTF_8));
-        return Long.toHexString(crc32.getValue());
-    }
-
-
-    private void cancelBookingForMember(Booking booking, String token) {
-        if (!jwtUtil.validateToken(token)) {
-            throw new IllegalArgumentException("유효하지 않은 JWT 토큰입니다.");
-        }
-
-        String usernameFromToken = jwtUtil.getUsername(token);
-        String usernameInBooking = memberService.getMemberById(booking.getMemberId()).getUsername();
-
-        if (!usernameFromToken.equals(usernameInBooking)) {
+        if (!username.equals(usernameInBooking)) {
             throw new IllegalArgumentException("로그인한 사용자와 예약자가 일치하지 않습니다.");
-        }
-
-        updateBookingStatusToCancelled(booking);
-    }
-
-    private void cancelBookingForGuest(Booking booking, String token) {
-        String expectedToken = generateToken(booking.getReferenceCode(), booking.getBookingEmail());
-
-        if (!expectedToken.equals(token)) {
-            throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
         }
 
         updateBookingStatusToCancelled(booking);
