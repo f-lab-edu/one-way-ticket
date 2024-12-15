@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/my-db
+    username: tester
+    password: 1234
+    schema: classpath:schema.sql
+  sql:
+    init:
+      mode: always
+      schema-location: classpath:schema.sql
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true

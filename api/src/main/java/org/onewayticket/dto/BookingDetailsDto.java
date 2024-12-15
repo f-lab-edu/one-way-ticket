@@ -22,4 +22,10 @@ public record BookingDetailsDto(
                         .toList()
         );
     }
+
+    public static List<BookingDetailsDto> fromList(List<BookingDetail> bookingDetails) {
+        return bookingDetails.stream()
+                .map(BookingDetailsDto::from)
+                .toList();
+    }
 }
