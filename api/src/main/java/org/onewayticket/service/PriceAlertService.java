@@ -30,6 +30,6 @@ public class PriceAlertService {
     }
 
     public List<PriceAlert> getPriceAlertList(String origin, String destination, BigDecimal targetAmount){
-        return priceAlertRepository.findByOriginAndDestinationAndTargetPriceGreaterThanEqual(origin,destination,targetAmount);
+        return priceAlertRepository.findByOriginAndDestinationAndTargetAmountGreaterThanEqual(origin,destination,targetAmount);
     }
 }

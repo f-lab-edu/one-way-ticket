@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface PriceAlertRepository extends JpaRepository<PriceAlert, Long> {
-    List<PriceAlert> findByOriginAndDestinationAndTargetPriceGreaterThanEqual(String origin, String destination, BigDecimal targetAmount);
+    List<PriceAlert> findByOriginAndDestinationAndTargetAmountGreaterThanEqual(String origin, String destination, BigDecimal targetAmount);
 }

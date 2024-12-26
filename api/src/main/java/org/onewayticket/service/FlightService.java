@@ -51,6 +51,7 @@ public class FlightService {
             flightRepository.save(flight);
             eventPublisher.publishEvent(new FlightAddedEvent(flight));
     }
+
     private Comparator<Flight> getComparatorForSort(String sort) {
         return switch (sort) {
             case "price" -> Comparator.comparing(Flight::getAmount);

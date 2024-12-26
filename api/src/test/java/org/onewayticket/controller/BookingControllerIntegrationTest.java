@@ -169,8 +169,8 @@ class BookingControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("기존 예약 고객은 예약번호, 이메일, 항공편 정보를 통해 예약정보를 조회할 수 있습니다.")
-    void getBookingDetailsWithValidInfo() {
+    @DisplayName("기존 예약 고객은 예약정보를 조회할 수 있습니다.")
+    void getBookingDetailsWithValidInfoSync() {
         // Given
         String url = baseUrl + "/api/v1/bookings/guest?referenceCode=B1234&bookingEmail=johndoe@example.com";
 
@@ -215,7 +215,5 @@ class BookingControllerIntegrationTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("해당 예약이 취소되었습니다.", response.getBody());
     }
+
 }
-
-
-
