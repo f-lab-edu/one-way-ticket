@@ -8,7 +8,6 @@ import org.onewayticket.domain.Member;
 import org.onewayticket.domain.Passenger;
 import org.onewayticket.enums.BookingStatus;
 import org.onewayticket.repository.BookingRepository;
-import org.onewayticket.security.JwtUtil;
 import org.onewayticket.util.ReferenceCodeGenerator;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -25,7 +24,6 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final FlightService flightService;
     private final MemberService memberService;
-    private final JwtUtil jwtUtil;
 
     public Booking createBooking(String email, List<Passenger> passengers, String paymentKey, Long flightId) {
         Booking booking = Booking.builder().referenceCode(ReferenceCodeGenerator.generateReferenceCode()).bookingEmail(email).flightId(flightId).paymentKey(paymentKey).passengers(passengers).status(BookingStatus.COMPLETED).build();

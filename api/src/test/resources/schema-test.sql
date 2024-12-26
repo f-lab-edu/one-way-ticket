@@ -53,9 +53,17 @@ CREATE TABLE IF NOT EXISTS member (
 );
 
 CREATE TABLE IF NOT EXISTS wishlist (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,         -- Wishlist 고유 ID
-    member_id BIGINT NOT NULL,                    -- 사용자 ID
-    flight_id BIGINT NOT NULL,                    -- 항공편 ID
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 찜한 시간
-    UNIQUE (member_id, flight_id)                 -- 사용자와 항공편의 유니크 제약 조건
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id BIGINT NOT NULL,
+    flight_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (member_id, flight_id)
+);
+
+CREATE TABLE IF NOT EXISTS price_alert (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+    origin VARCHAR(255) NOT NULL,
+    destination VARCHAR(255) NOT NULL,
+    target_amount DECIMAL(19, 2) NOT NULL
 );
