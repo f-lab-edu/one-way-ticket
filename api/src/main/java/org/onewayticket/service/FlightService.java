@@ -2,7 +2,9 @@ package org.onewayticket.service;
 
 import lombok.RequiredArgsConstructor;
 import org.onewayticket.domain.Flight;
+import org.onewayticket.event.FlightAddedEvent;
 import org.onewayticket.repository.FlightRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -18,6 +20,7 @@ import java.util.NoSuchElementException;
 @RequiredArgsConstructor
 public class FlightService {
     private final FlightRepository flightRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public Flight getFlightDetails(String flightId) {
         if (flightId.isBlank()) throw new IllegalArgumentException("flightId 값이 전달되지 않았습니다.");
@@ -44,6 +47,10 @@ public class FlightService {
         return flights;
     }
 
+    public void addFlight(Flight flight){
+            flightRepository.save(flight);
+            eventPublisher.publishEvent(new FlightAddedEvent(flight));
+    }
     private Comparator<Flight> getComparatorForSort(String sort) {
         return switch (sort) {
             case "price" -> Comparator.comparing(Flight::getAmount);
