@@ -3,3 +3,5 @@ plugins {
 }
 rootProject.name = 'one-way-ticket'
 include 'api'
+include 'flight-data-loader'
+

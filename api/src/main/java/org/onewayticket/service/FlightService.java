@@ -2,7 +2,6 @@ package org.onewayticket.service;
 
 import lombok.RequiredArgsConstructor;
 import org.onewayticket.domain.Flight;
-import org.onewayticket.event.FlightAddedEvent;
 import org.onewayticket.repository.FlightRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -47,10 +46,6 @@ public class FlightService {
         return flights;
     }
 
-    public void addFlight(Flight flight){
-            flightRepository.save(flight);
-            eventPublisher.publishEvent(new FlightAddedEvent(flight));
-    }
     private Comparator<Flight> getComparatorForSort(String sort) {
         return switch (sort) {
             case "price" -> Comparator.comparing(Flight::getAmount);

@@ -2,7 +2,6 @@ package org.onewayticket.domain;
 
 import lombok.Getter;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -17,7 +16,7 @@ public class BookingDetail {
 
     private String paymentKey;
 
-    private List<Passenger> passengers = new ArrayList<>();
+    private List<Passenger> passengers;
 
     public BookingDetail(Booking booking, Flight flight) {
         this.bookingId = booking.getId();

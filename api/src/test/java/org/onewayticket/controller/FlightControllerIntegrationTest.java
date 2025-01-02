@@ -39,16 +39,15 @@ public class FlightControllerIntegrationTest {
 
     private void resetDatabase() {
         jdbcTemplate.execute("TRUNCATE TABLE flight");
-        jdbcTemplate.execute("ALTER TABLE flight AUTO_INCREMENT = 1");
     }
 
     private void insertTestData() {
         jdbcTemplate.execute("""
-                    INSERT INTO flight (flight_number, amount, departure_time, arrival_time, origin, destination, duration_in_minutes, carrier) VALUES
-                    ('AA101', 150.00, '2024-12-01 08:00:00', '2024-12-01 11:00:00', 'ICN', 'LAX', 180, 'American Airlines'),
-                    ('UA202', 200.00, '2024-12-01 09:00:00', '2024-12-01 13:00:00', 'ICN', 'ORD', 240, 'United Airlines'),
-                    ('DL303', 175.50, '2024-12-02 14:00:00', '2024-12-02 18:00:00', 'ICN', 'SEA', 240, 'Delta Airlines');
-                """);
+                INSERT INTO flight (id, flight_number, amount, departure_time, arrival_time, origin, destination, duration_in_minutes, carrier) VALUES
+                ('FLIGHT001', 'AA101', 150.00, '2024-12-01 08:00:00', '2024-12-01 11:00:00', 'ICN', 'LAX', 180, 'American Airlines'),
+                ('FLIGHT002', 'UA202', 200.00, '2024-12-01 09:00:00', '2024-12-01 13:00:00', 'ICN', 'ORD', 240, 'United Airlines'),
+                ('FLIGHT003', 'DL303', 175.50, '2024-12-02 14:00:00', '2024-12-02 18:00:00', 'ICN', 'SEA', 240, 'Delta Airlines');
+            """);
     }
 
 
