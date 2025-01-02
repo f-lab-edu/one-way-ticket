@@ -19,10 +19,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.test.util.AssertionErrors.fail;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class BookingControllerIntegrationTest {
@@ -165,7 +173,7 @@ class BookingControllerIntegrationTest {
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
+        assertEquals(response.getBody().bookingEmail(), username);
     }
 
     @Test
@@ -215,5 +223,238 @@ class BookingControllerIntegrationTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("해당 예약이 취소되었습니다.", response.getBody());
     }
+    @Autowired
+    private Executor asyncExecutor;
+    @Test
+    @DisplayName("멀티스레드 동시성 테스트: CompletableFuture API")
+    void testCompletableFutureApiRequests() throws InterruptedException {
+        // Given
+        Long bookingId = 1L;
+        String username = "johndoe@example.com";
+        String completableUrl = baseUrl + "/api/v1/bookings/completable/" + bookingId; // CompletableFuture API URL
+        String token = jwtUtil.generateToken(username, 60 * 10 * 1000);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + token);
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+        int numberOfThreads = 10; // 동시 요청 수
+
+        List<CompletableFuture<ResponseEntity<BookingDetailsDto>>> futures = new ArrayList<>();
+        System.out.println("Testing: CompletableFuture API");
+        long startTime = System.currentTimeMillis(); // 시작 시간 측정
+
+        // When
+        for (int i = 0; i < numberOfThreads; i++) {
+            CompletableFuture<ResponseEntity<BookingDetailsDto>> future = CompletableFuture.supplyAsync(() -> {
+                return restTemplate.exchange(completableUrl, HttpMethod.GET, requestEntity, BookingDetailsDto.class);
+            }, asyncExecutor);
+
+            futures.add(future);
+        }
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        long endTime = System.currentTimeMillis(); // 종료 시간 측정
+        System.out.println("CompletableFuture API execution time: " + (endTime - startTime) + " ms");
+
+        // Then
+        futures.forEach(future -> {
+            try {
+                ResponseEntity<BookingDetailsDto> response = future.get();
+                assertNotNull(response);
+                assertEquals(HttpStatus.OK, response.getStatusCode());
+                assertNotNull(response.getBody());
+            } catch (Exception e) {
+                fail("Request failed with exception: " + e.getMessage());
+            }
+        });
+    }
+    @Test
+    @DisplayName("멀티스레드 동시성 테스트: Callable API")
+    void testCallableApiRequests() throws InterruptedException {
+        // Given
+        Long bookingId = 1L;
+        String username = "johndoe@example.com";
+        String callableUrl = baseUrl + "/api/v1/bookings/" + bookingId; // Callable API URL
+        String token = jwtUtil.generateToken(username, 60 * 10 * 1000);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + token);
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+        int numberOfThreads = 10; // 동시 요청 수
+
+        System.out.println("Testing: Callable API");
+        long startTime = System.currentTimeMillis(); // 시작 시간 측정
+
+        // When
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+        for (int i = 0; i < numberOfThreads; i++) {
+            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+                ResponseEntity<BookingDetailsDto> response = restTemplate.exchange(callableUrl, HttpMethod.GET, requestEntity, BookingDetailsDto.class);
+                assertEquals(HttpStatus.OK, response.getStatusCode());
+                assertNotNull(response.getBody());
+                System.out.println("Response received in thread: " + Thread.currentThread().getName());
+            });
+
+            futures.add(future);
+        }
+
+        // Wait for all futures to complete
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        long endTime = System.currentTimeMillis(); // 종료 시간 측정
+        System.out.println("Callable API execution time: " + (endTime - startTime) + " ms");
+    }
+
+    @Test
+    @DisplayName("멀티스레드 동시성 테스트: CompletableFuture API와 Callable API 비교")
+    void testConcurrentApiRequestsComparison() throws InterruptedException {
+        // Given
+        Long bookingId = 1L;
+        String username = "johndoe@example.com";
+        String completableUrl = baseUrl + "/api/v1/bookings/completable/" + bookingId; // CompletableFuture API URL
+        String callableUrl = baseUrl + "/api/v1/bookings/" + bookingId; // Callable API URL
+        String token = jwtUtil.generateToken(username, 60 * 10 * 1000);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + token);
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+        int numberOfThreads = 10; // 동시 요청 수
+        ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
+
+        // 테스트 대상별 요청 저장소
+        Map<String, List<CompletableFuture<ResponseEntity<BookingDetailsDto>>>> testFutures = new HashMap<>();
+        testFutures.put("CompletableFuture API", new ArrayList<>());
+        testFutures.put("Callable API", new ArrayList<>());
+
+        // When
+        for (String apiType : testFutures.keySet()) {
+            String url = apiType.equals("CompletableFuture API") ? completableUrl : callableUrl;
+
+            System.out.println("Testing: " + apiType);
+            long startTime = System.currentTimeMillis(); // 시작 시간 측정
+
+            for (int i = 0; i < numberOfThreads; i++) {
+                CompletableFuture<ResponseEntity<BookingDetailsDto>> future;
+                if (apiType.equals("CompletableFuture API")) {
+                    // CompletableFuture API는 asyncExecutor 사용
+                    future = CompletableFuture.supplyAsync(() -> {
+                        return restTemplate.exchange(url, HttpMethod.GET, requestEntity, BookingDetailsDto.class);
+                    }, asyncExecutor);
+                } else {
+                    // Callable API는 기본 ExecutorService 사용
+                    future = CompletableFuture.supplyAsync(() -> {
+                        return restTemplate.exchange(url, HttpMethod.GET, requestEntity, BookingDetailsDto.class);
+                    }, executorService);
+                }
+
+                testFutures.get(apiType).add(future);
+            }
+
+            // 모든 작업 완료 대기
+            CompletableFuture.allOf(testFutures.get(apiType).toArray(new CompletableFuture[0])).join();
+
+            long endTime = System.currentTimeMillis(); // 종료 시간 측정
+            System.out.println(apiType + " execution time: " + (endTime - startTime) + " ms");
+        }
+
+        // Then
+        for (String apiType : testFutures.keySet()) {
+            int successCount = 0;
+            long totalRequestTime = 0;
+
+            for (CompletableFuture<ResponseEntity<BookingDetailsDto>> future : testFutures.get(apiType)) {
+                long requestStartTime = System.currentTimeMillis();
+                ResponseEntity<BookingDetailsDto> response = future.join();
+                long requestEndTime = System.currentTimeMillis();
+
+                assertEquals(HttpStatus.OK, response.getStatusCode());
+                assertNotNull(response.getBody());
+
+                successCount++;
+                totalRequestTime += (requestEndTime - requestStartTime);
+            }
+
+            System.out.println("=== Results for " + apiType + " ===");
+            System.out.println("Total successful requests: " + successCount);
+            System.out.println("Average request time: " + (totalRequestTime / successCount) + " ms");
+        }
+
+        executorService.shutdown();
+    }
+
+    @Test
+    @DisplayName("멀티스레드 동시성 테스트: CompletableFuture API와 Callable API 비교")
+    void testConcurrentApiRequestsComparison2() throws InterruptedException {
+        // Given
+        Long bookingId = 1L;
+        String username = "johndoe@example.com";
+        String completableUrl = baseUrl + "/api/v1/bookings/completable/" + bookingId; // CompletableFuture API URL
+        String callableUrl = baseUrl + "/api/v1/bookings/" + bookingId; // Callable API URL
+        String token = jwtUtil.generateToken(username, 60 * 10 * 1000);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + token);
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+        int numberOfThreads = 24; // 동시 요청 수
+        ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
+
+        // 테스트 대상별 요청 저장소
+        Map<String, List<CompletableFuture<ResponseEntity<BookingDetailsDto>>>> testFutures = new HashMap<>();
+        testFutures.put("CompletableFuture API", new ArrayList<>());
+        testFutures.put("Callable API", new ArrayList<>());
+
+        // When
+        for (String apiType : testFutures.keySet()) {
+            String url = apiType.equals("CompletableFuture API") ? completableUrl : callableUrl;
+
+            System.out.println("Testing: " + apiType);
+            long startTime = System.currentTimeMillis(); // 시작 시간 측정
+
+            for (int i = 0; i < numberOfThreads; i++) {
+                CompletableFuture<ResponseEntity<BookingDetailsDto>> future = CompletableFuture.supplyAsync(() -> {
+                    return restTemplate.exchange(url, HttpMethod.GET, requestEntity, BookingDetailsDto.class);
+                }, executorService);
+
+                testFutures.get(apiType).add(future);
+            }
+
+            // 모든 작업 완료 대기
+            CompletableFuture.allOf(testFutures.get(apiType).toArray(new CompletableFuture[0])).join();
+
+            long endTime = System.currentTimeMillis(); // 종료 시간 측정
+            System.out.println(apiType + " execution time: " + (endTime - startTime) + " ms");
+        }
+
+        // Then
+        for (String apiType : testFutures.keySet()) {
+            int successCount = 0;
+            long totalRequestTime = 0;
+
+            for (CompletableFuture<ResponseEntity<BookingDetailsDto>> future : testFutures.get(apiType)) {
+                long requestStartTime = System.currentTimeMillis();
+                ResponseEntity<BookingDetailsDto> response = future.join();
+                long requestEndTime = System.currentTimeMillis();
+
+                assertEquals(HttpStatus.OK, response.getStatusCode());
+                assertNotNull(response.getBody());
+
+                successCount++;
+                totalRequestTime += (requestEndTime - requestStartTime);
+            }
+
+            System.out.println("=== Results for " + apiType + " ===");
+            System.out.println("Total successful requests: " + successCount);
+            System.out.println("Average request time: " + (totalRequestTime / successCount) + " ms");
+        }
+
+        executorService.shutdown();
+    }
+
 
 }
