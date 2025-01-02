@@ -64,18 +64,17 @@ class BookingControllerIntegrationTest {
         jdbcTemplate.execute("TRUNCATE TABLE member");
         jdbcTemplate.execute("ALTER TABLE passenger AUTO_INCREMENT = 1");
         jdbcTemplate.execute("ALTER TABLE booking AUTO_INCREMENT = 1");
-        jdbcTemplate.execute("ALTER TABLE flight AUTO_INCREMENT = 1");
         jdbcTemplate.execute("ALTER TABLE member AUTO_INCREMENT = 1");
         jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
     }
 
     private void insertTestData() {
         jdbcTemplate.execute("""
-                    INSERT INTO flight (flight_number, amount, departure_time, arrival_time, origin, destination, duration_in_minutes, carrier) VALUES
-                    ('AA101', 150.00, '2024-12-01 08:00:00', '2024-12-01 11:00:00', 'ICN', 'LAX', 180, 'American Airlines'),
-                    ('UA202', 200.00, '2024-12-01 09:00:00', '2024-12-01 13:00:00', 'ICN', 'ORD', 240, 'United Airlines'),
-                    ('DL303', 175.50, '2024-12-02 14:00:00', '2024-12-02 18:00:00', 'ICN', 'SEA', 240, 'Delta Airlines');
-                """);
+                INSERT INTO flight (id, flight_number, amount, departure_time, arrival_time, origin, destination, duration_in_minutes, carrier) VALUES
+                ('FLIGHT001', 'AA101', 150.00, '2024-12-01 08:00:00', '2024-12-01 11:00:00', 'ICN', 'LAX', 180, 'American Airlines'),
+                ('FLIGHT002', 'UA202', 200.00, '2024-12-01 09:00:00', '2024-12-01 13:00:00', 'ICN', 'ORD', 240, 'United Airlines'),
+                ('FLIGHT003', 'DL303', 175.50, '2024-12-02 14:00:00', '2024-12-02 18:00:00', 'ICN', 'SEA', 240, 'Delta Airlines');
+            """);
 
         jdbcTemplate.execute("""
                     INSERT INTO booking (member_id, reference_code, booking_email, flight_id, payment_key, status, created_at) VALUES

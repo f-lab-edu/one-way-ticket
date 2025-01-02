@@ -1,4 +1,4 @@
-package org.onewayticket.saver;
+package org.onewayticket.generator;
 
 import org.onewayticket.model.Flight;
 
@@ -8,13 +8,13 @@ import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.util.List;
 
-public class DataSaver {
+public class FlightDataSaver {
 
     private final String dbUrl;
     private final String dbUser;
     private final String dbPassword;
 
-    public DataSaver(String dbUrl, String dbUser, String dbPassword) {
+    public FlightDataSaver(String dbUrl, String dbUser, String dbPassword) {
         this.dbUrl = dbUrl;
         this.dbUser = dbUser;
         this.dbPassword = dbPassword;
@@ -25,7 +25,6 @@ public class DataSaver {
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            System.out.println("connection = " + connection);
             for (Flight flight : flights) {
                 statement.setString(1, flight.getFlightNumber());
                 statement.setBigDecimal(2, flight.getAmount());

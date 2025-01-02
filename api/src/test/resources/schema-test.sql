@@ -1,13 +1,13 @@
--- 테이블 생성
 CREATE TABLE IF NOT EXISTS booking (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     member_id BIGINT,
     reference_code VARCHAR(255),
     booking_email VARCHAR(255),
-    flight_id BIGINT,
+    flight_id VARCHAR(255),
     payment_key VARCHAR(255),
     status VARCHAR(50),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    FOREIGN KEY (flight_id) REFERENCES flight(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS passenger (
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS passenger (
 );
 
 CREATE TABLE IF NOT EXISTS flight (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id VARCHAR(255) PRIMARY KEY,
     flight_number VARCHAR(255),
     amount DECIMAL(19, 2),
     departure_time DATETIME,
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS member (
 CREATE TABLE IF NOT EXISTS wishlist (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     member_id BIGINT NOT NULL,
-    flight_id BIGINT NOT NULL,
+    flight_id VARCHAR(255) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (member_id, flight_id)
 );

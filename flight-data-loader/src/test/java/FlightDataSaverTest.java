@@ -1,7 +1,7 @@
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.onewayticket.model.Flight;
-import org.onewayticket.saver.DataSaver;
+import org.onewayticket.generator.FlightDataSaver;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -12,13 +12,13 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class DataSaverTest {
+public class FlightDataSaverTest {
 
     private static final String DB_URL = "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1";
     private static final String DB_USER = "sa";
     private static final String DB_PASSWORD = "";
 
-    private DataSaver dataSaver;
+    private FlightDataSaver flightDataSaver;
 
     @BeforeEach
     public void setupDatabase() throws Exception {
@@ -41,7 +41,7 @@ public class DataSaverTest {
             statement.execute(createTableSql);
         }
 
-        dataSaver = new DataSaver(DB_URL, DB_USER, DB_PASSWORD);
+        flightDataSaver = new FlightDataSaver(DB_URL, DB_USER, DB_PASSWORD);
     }
 
     @Test
@@ -71,7 +71,7 @@ public class DataSaverTest {
         );
 
         // When
-        dataSaver.saveFlights(flights);
+        flightDataSaver.saveFlights(flights);
 
         // Then
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);

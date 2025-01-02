@@ -11,7 +11,8 @@ dependencies {
     implementation 'com.mysql:mysql-connector-j:8.3.0'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
     testImplementation 'org.mockito:mockito-core:4.8.0'
-//    implementation 'com.h2database:h2:2.3.232'
+    implementation 'org.apache.kafka:kafka-clients:3.5.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
 }
 
 test {

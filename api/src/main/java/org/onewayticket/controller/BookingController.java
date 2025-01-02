@@ -11,7 +11,6 @@ import org.onewayticket.dto.BookingRequestDto;
 import org.onewayticket.dto.PassengerDto;
 import org.onewayticket.security.JwtUtil;
 import org.onewayticket.service.BookingService;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,8 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 @Validated
 @RestController
@@ -70,19 +67,6 @@ public class BookingController {
             BookingDetail bookingDetail = bookingService.getBookingDetailsForUser(id, username);
             return ResponseEntity.ok(BookingDetailsDto.from(bookingDetail));
         };
-    }
-
-    @Qualifier("asyncExecutor")
-    private Executor asyncExecutor;
-
-    @GetMapping("/completable/{id}")
-    public CompletableFuture<ResponseEntity<BookingDetailsDto>> getBookingDetailsForMemberAsync(
-            @PathVariable @NotNull Long id,
-            HttpServletRequest request) {
-        System.out.println("COMPLETABLE Controller. Thread: " + Thread.currentThread().getName());
-        String username = (String) request.getAttribute("username");
-        return bookingService.getBookingDetailsForUserAsyncWithCustomExecutor(id, username)
-                .thenApply(bookingDetail -> ResponseEntity.ok(BookingDetailsDto.from(bookingDetail)));
     }
 
     @GetMapping("/guest")
