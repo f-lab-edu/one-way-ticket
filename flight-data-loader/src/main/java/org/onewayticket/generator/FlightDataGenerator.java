@@ -16,7 +16,7 @@ public class FlightDataGenerator {
         List<Flight> flights = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             flights.add(Flight.builder()
-                            .flightId(UUID.randomUUID().toString())
+                            .id(UUID.randomUUID().toString())
                     .flightNumber(UUID.randomUUID().toString().substring(0, 6).toUpperCase())
                     .amount(BigDecimal.valueOf(50 + random.nextDouble() * 500))
                     .departureTime(LocalDateTime.now().plusHours(random.nextInt(24)))

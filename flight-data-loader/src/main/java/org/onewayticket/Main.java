@@ -9,7 +9,7 @@ public class Main {
     private static final String DB_URL = "jdbc:mysql://127.0.0.1:3306/my-db";
     private static final String DB_USER = "tester";
     private static final String DB_PASSWORD = "1234";
-    private static final String KAFKA_BROKER = "localhost:9092";
+    private static final String KAFKA_BROKER = "localhost:9093";
 
     public static void main(String[] args) {
         FlightDataGenerator generator = new FlightDataGenerator();

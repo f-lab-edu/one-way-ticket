@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 @Builder
 public record FlightDto(
-        Long id,                      // 항공편 id
+        String id,                      // 항공편 id
         String flightNumber,          // 항공편명
         BigDecimal amount,                   // 항공권 가격
         LocalDateTime departureTime,  // 출발 시간

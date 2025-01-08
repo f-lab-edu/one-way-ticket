@@ -8,7 +8,6 @@ import java.util.List;
 
 @RequiredArgsConstructor
 public class FlightProcessor {
-//    private static final ObjectMapper objectMapper = new ObjectMapper();
     private final FlightDataGenerator generator;
     private final FlightDataSaver saver;
     private final FlightMessageProducer producer;
@@ -17,20 +16,8 @@ public class FlightProcessor {
         List<Flight> flights = generator.generateRandomFlights(count);
         saver.saveFlights(flights);
         for (Flight flight : flights) {
-            String flightJson = flightToJson(flight);
-            producer.produce(flight.getFlightId(), flightJson);
+            producer.produce(flight.getId(), flight);
         }
-    }
-
-    private String flightToJson(Flight flight) {
-        return String.format(
-                "{\"flightId\":\"%s\",\"origin\":\"%s\",\"destination\":\"%s\",\"amount\":%s,\"departureTime\":\"%s\"}",
-                flight.getFlightNumber(),
-                flight.getOrigin(),
-                flight.getDestination(),
-                flight.getAmount(),
-                flight.getDepartureTime()
-        );
     }
 
 }

@@ -26,7 +26,7 @@ public class BookingService {
     private final MemberService memberService;
 
 
-    public Booking createBooking(String email, List<Passenger> passengers, String paymentKey, Long flightId) {
+    public Booking createBooking(String email, List<Passenger> passengers, String paymentKey, String flightId) {
         Booking booking = Booking.builder().referenceCode(ReferenceCodeGenerator.generateReferenceCode()).bookingEmail(email).flightId(flightId).paymentKey(paymentKey).passengers(passengers).status(BookingStatus.COMPLETED).build();
         try {
             bookingRepository.save(booking);

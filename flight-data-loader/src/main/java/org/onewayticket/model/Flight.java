@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 public class Flight {
-    private String flightId;
+    private String id;
     private String flightNumber;
     private BigDecimal amount;
     private LocalDateTime departureTime;

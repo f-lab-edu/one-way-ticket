@@ -39,7 +39,7 @@ public class BookingController {
     @PostMapping
     public ResponseEntity<Booking> createBooking(@Valid @RequestBody BookingRequestDto bookingRequestInfo,
                                                  @NotNull @RequestParam String flightId) {
-        Booking booking = bookingService.createBooking(bookingRequestInfo.bookingEmail(), PassengerDto.from(bookingRequestInfo.passengers()), bookingRequestInfo.paymentKey(), Long.parseLong(flightId));
+        Booking booking = bookingService.createBooking(bookingRequestInfo.bookingEmail(), PassengerDto.from(bookingRequestInfo.passengers()), bookingRequestInfo.paymentKey(), flightId);
         return ResponseEntity.status(HttpStatus.CREATED).body(booking);
     }
 

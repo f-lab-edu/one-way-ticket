@@ -37,7 +37,7 @@ public class Booking {
 
     private String bookingEmail;
 
-    private Long flightId;
+    private String flightId;
 
     private String paymentKey;
 

@@ -1,9 +1,11 @@
 package org.onewayticket.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.onewayticket.domain.Flight;
+import org.onewayticket.event.PriceAlertRequestEvent;
 import org.onewayticket.repository.FlightRepository;
-import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -15,11 +17,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FlightService {
     private final FlightRepository flightRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public Flight getFlightDetails(String flightId) {
         if (flightId.isBlank()) throw new IllegalArgumentException("flightId 값이 전달되지 않았습니다.");
@@ -45,6 +48,18 @@ public class FlightService {
         flights.sort(getComparatorForSort(sort));
         return flights;
     }
+
+    public void handleFlightAdded(Flight flight) {
+        log.info("Processing flight added event: {}", flight);
+
+        // Price Alert 요청 이벤트 생성
+        PriceAlertRequestEvent requestEvent = new PriceAlertRequestEvent(flight);
+
+        // 'price-alert-requested' 토픽에 발행
+        kafkaTemplate.send("price-alert-requested", flight.getId(), requestEvent);
+        log.info("Sent price-alert-requested event: {}", requestEvent);
+    }
+
 
     private Comparator<Flight> getComparatorForSort(String sort) {
         return switch (sort) {

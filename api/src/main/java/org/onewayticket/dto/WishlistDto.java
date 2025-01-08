@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record WishlistDto(
-        Long flightId,
+        String flightId,
         LocalDateTime createdAt
 ) {
     public static WishlistDto from(Wishlist wishlist) {

@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS booking (
     payment_key VARCHAR(255),
     status VARCHAR(50),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    FOREIGN KEY (flight_id) REFERENCES flight(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS passenger (

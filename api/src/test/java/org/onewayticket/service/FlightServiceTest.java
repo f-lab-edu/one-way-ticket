@@ -41,7 +41,7 @@ public class FlightServiceTest {
     void Get_flightDetails_with_valid_flightId() {
         // given
         String flightId = "1";
-        Flight mockFlight = Flight.builder().id(Long.parseLong(flightId)).build();
+        Flight mockFlight = Flight.builder().id(flightId).build();
         Mockito.when(flightRepository.findById(1L)).thenReturn(Optional.of(mockFlight));
 
         // when
