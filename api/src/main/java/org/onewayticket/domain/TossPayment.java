@@ -19,8 +19,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@NoArgsConstructor
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
 public class TossPayment {
 
@@ -40,11 +40,9 @@ public class TossPayment {
     private BigDecimal totalAmount;
 
     @Enumerated(value = EnumType.STRING)
-    @Column(columnDefinition = "varchar(10")
     private PaymentMethod paymentMethod;
 
     @Enumerated(value = EnumType.STRING)
-    @Column(columnDefinition = "varchar(10")
     private PaymentStatus paymentStatus;
 
     private LocalDateTime requestedAt;

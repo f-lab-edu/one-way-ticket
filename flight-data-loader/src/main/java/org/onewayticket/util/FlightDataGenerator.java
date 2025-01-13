@@ -1,6 +1,7 @@
-package org.onewayticket.generator;
+package org.onewayticket.util;
 
 import org.onewayticket.model.Flight;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -9,6 +10,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
+@Component
 public class FlightDataGenerator {
     private final Random random = new Random();
 
@@ -16,7 +18,7 @@ public class FlightDataGenerator {
         List<Flight> flights = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             flights.add(Flight.builder()
-                            .id(UUID.randomUUID().toString())
+                    .id(UUID.randomUUID().toString())
                     .flightNumber(UUID.randomUUID().toString().substring(0, 6).toUpperCase())
                     .amount(BigDecimal.valueOf(50 + random.nextDouble() * 500))
                     .departureTime(LocalDateTime.now().plusHours(random.nextInt(24)))

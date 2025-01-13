@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:mysql://owt-mysql-db:3306/my-db
+    username: tester
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  kafka:
+    bootstrap-servers: kafka:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializer
+      auto.register.schemas: true
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer
+      properties:
+        specific.protobuf.value.type: org.onewayticket.flight.FlightProto$Flight
+    properties:
+      schema.registry.url: http://schema-registry:8081
+    listener:
+      missing-topics-fatal: false
