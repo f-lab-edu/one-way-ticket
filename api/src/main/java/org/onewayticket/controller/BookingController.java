@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
 @Validated
 @RestController
@@ -49,11 +50,22 @@ public class BookingController {
         return ResponseEntity.ok(bookingDetailsDtoList);
     }
 
+//    @GetMapping("/{id}")
+//    public ResponseEntity<?> getBookingDetailsForMember(@PathVariable @NotNull Long id, HttpServletRequest request) {
+//        String username = (String) request.getAttribute("username");
+//        BookingDetailsDto bookingDetailsDto = BookingDetailsDto.from(bookingService.getBookingDetailsForUser(id, username));
+//        return ResponseEntity.ok(bookingDetailsDto);
+//    }
+
     @GetMapping("/{id}")
-    public ResponseEntity<?> getBookingDetailsForMember(@PathVariable @NotNull Long id, HttpServletRequest request) {
-        String username = (String) request.getAttribute("username");
-        BookingDetailsDto bookingDetailsDto = BookingDetailsDto.from(bookingService.getBookingDetailsForUser(id, username));
-        return ResponseEntity.ok(bookingDetailsDto);
+    public Callable<ResponseEntity<BookingDetailsDto>> getBookingDetailsForMember(
+            @PathVariable @NotNull Long id,
+            HttpServletRequest request) {
+        return () -> {
+            String username = (String) request.getAttribute("username");
+            BookingDetail bookingDetail = bookingService.getBookingDetailsForUser(id, username);
+            return ResponseEntity.ok(BookingDetailsDto.from(bookingDetail));
+        };
     }
 
     @GetMapping("/guest")
@@ -68,6 +80,7 @@ public class BookingController {
 
         return ResponseEntity.ok().headers(headers).body(BookingDetailsDto.from(bookingDetail));
     }
+
 
     // 예약 취소(회원, 비회원 통합)
     @PostMapping("/{id}")
