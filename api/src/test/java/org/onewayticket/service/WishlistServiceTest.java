@@ -47,8 +47,8 @@ public class WishlistServiceTest {
 
         Mockito.when(memberService.getMemberByUsername(username)).thenReturn(member);
         Mockito.when(wishlistRepository.findAllByMemberId(1L)).thenReturn(Optional.of(List.of(
-                new Wishlist(1L, 1001L),
-                new Wishlist(1L, 1002L)
+                new Wishlist(1L, "1001"),
+                new Wishlist(1L, "1002")
         )));
 
         // When
@@ -64,7 +64,7 @@ public class WishlistServiceTest {
     void AddToWishlist_Success() {
         // Given
         String username = "testUser";
-        Long flightId = 1001L;
+        String flightId = "1001";
         Member member = new Member(1L, username, "password");
 
         Mockito.when(memberService.getMemberByUsername(username)).thenReturn(member);
@@ -76,7 +76,7 @@ public class WishlistServiceTest {
         // Then
         assertNotNull(result);
         assertEquals(1L, result.getMemberId());
-        assertEquals(1001L, result.getFlightId());
+        assertEquals("1001", result.getFlightId());
     }
 
     @Test
@@ -86,7 +86,7 @@ public class WishlistServiceTest {
         String username = "testUser";
         Long wishlistId = 1L;
         Member member = new Member(1L, username, "password");
-        Wishlist wishlist = new Wishlist(1L, 1001L);
+        Wishlist wishlist = new Wishlist(1L, "1001");
 
         Mockito.when(wishlistRepository.findById(wishlistId)).thenReturn(Optional.of(wishlist));
         Mockito.when(memberService.getMemberByUsername(username)).thenReturn(member);

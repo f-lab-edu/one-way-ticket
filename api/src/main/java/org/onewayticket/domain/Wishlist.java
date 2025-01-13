@@ -23,13 +23,13 @@ public class Wishlist {
     private Long memberId;
 
     @Column(name = "flight_id", nullable = false)
-    private Long flightId;
+    private String flightId;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    public Wishlist(Long memberId, Long flightId) {
+    public Wishlist(Long memberId, String flightId) {
         this.memberId = memberId;
         this.flightId = flightId;
     }

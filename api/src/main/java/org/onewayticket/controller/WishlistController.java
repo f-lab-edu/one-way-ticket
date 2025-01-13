@@ -35,7 +35,7 @@ public class WishlistController {
     @PostMapping("/{flightId}")
     public ResponseEntity<?> addToWishlist(
             HttpServletRequest request,
-            @PathVariable @Valid Long flightId) {
+            @PathVariable @Valid String flightId) {
         String username = (String) request.getAttribute("username");
         wishlistService.addToWishlist(username, flightId);
         return ResponseEntity.status(HttpStatus.CREATED).body("찜 목록에 추가되었습니다.");

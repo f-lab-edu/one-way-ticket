@@ -22,7 +22,7 @@ public class WishlistService {
         return wishlistRepository.findAllByMemberId(member.getId()).orElseThrow();
     }
 
-    public Wishlist addToWishlist(String username, Long flightId) {
+    public Wishlist addToWishlist(String username, String flightId) {
         Member member = memberService.getMemberByUsername(username);
         Wishlist wishlist = new Wishlist(member.getId(), flightId);
         try {
