@@ -1,5 +1,5 @@
 import org.junit.jupiter.api.Test;
-import org.onewayticket.generator.FlightDataGenerator;
+import org.onewayticket.util.FlightDataGenerator;
 import org.onewayticket.model.Flight;
 
 import java.util.List;

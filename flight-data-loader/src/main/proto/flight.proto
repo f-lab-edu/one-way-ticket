@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package org.onewayticket.model;
+option java_package = "org.onewayticket.flight"; // Java 클래스가 생성될 패키지
+option java_outer_classname = "FlightProto"; // 생성될 Java 클래스 이름
+
+message Flight {
+  string id = 1;
+  string flightNumber = 2;
+  double amount = 3;
+  string departureTime = 4;
+  string arrivalTime = 5;
+  string origin = 6;
+  string destination = 7;
+  int32 durationInMinutes = 8;
+  string carrier = 9;
+}

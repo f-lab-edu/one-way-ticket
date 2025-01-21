@@ -4,4 +4,6 @@ plugins {
 rootProject.name = 'one-way-ticket'
 include 'api'
 include 'flight-data-loader'
+include 'kafka'
+include 'event-streaming'
 

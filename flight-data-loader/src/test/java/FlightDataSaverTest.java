@@ -1,7 +1,7 @@
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.onewayticket.model.Flight;
-import org.onewayticket.generator.FlightDataSaver;
+import org.onewayticket.util.FlightDataSaver;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -41,7 +41,7 @@ public class FlightDataSaverTest {
             statement.execute(createTableSql);
         }
 
-        flightDataSaver = new FlightDataSaver(DB_URL, DB_USER, DB_PASSWORD);
+//        flightDataSaver = new FlightDataSaver(DB_URL, DB_USER, DB_PASSWORD);
     }
 
     @Test
