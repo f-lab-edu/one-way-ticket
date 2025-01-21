@@ -27,7 +27,7 @@ public class PriceAlertController {
     }
 
     @DeleteMapping("/{priceAlertId}")
-    public ResponseEntity<?> unsuscribePriceAlert(HttpServletRequest request, @PathVariable Long priceAlertId) {
+    public ResponseEntity<?> unsubscribePriceAlert(HttpServletRequest request, @PathVariable Long priceAlertId) {
         String username = (String) request.getAttribute("username");
         PriceAlert priceAlert = priceAlertService.removePriceAlert(username, priceAlertId);
         return ResponseEntity.status(HttpStatus.OK).body(priceAlert);

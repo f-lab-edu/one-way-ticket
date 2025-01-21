@@ -61,7 +61,6 @@ public class BookingController {
     public Callable<ResponseEntity<BookingDetailsDto>> getBookingDetailsForMember(
             @PathVariable @NotNull Long id,
             HttpServletRequest request) {
-        System.out.println("CALLABLE Controller. Thread: " + Thread.currentThread().getName());
         return () -> {
             String username = (String) request.getAttribute("username");
             BookingDetail bookingDetail = bookingService.getBookingDetailsForUser(id, username);

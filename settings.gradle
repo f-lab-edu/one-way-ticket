@@ -6,4 +6,5 @@ include 'api'
 include 'flight-data-loader'
 include 'kafka'
 include 'event-streaming'
+include 'payment'
 

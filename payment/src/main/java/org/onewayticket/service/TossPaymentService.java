@@ -5,12 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.onewayticket.domain.TossPayment;
-import org.onewayticket.dto.PaymentConfirmRequestDto;
 import org.onewayticket.dto.PaymentRequestDto;
-import org.onewayticket.enums.PaymentStatus;
+import org.onewayticket.dto.TossPaymentConfirmRequestDto;
 import org.onewayticket.repository.PaymentRepository;
-import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -24,7 +21,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class PaymentService {
+public class TossPaymentService {
     private static final String CONFIRM_URL = "https://api.tosspayments.com/v1/payments/confirm";
     private static final String CANCEL_URL = "https://api.tosspayments.com/v1/payments/";
     private static final String SECRET_KEY = "test_sk_zXLkKEypNArWmo50nX3lmeaxYG5R"; // 실제 키로 교체 필요
@@ -37,23 +34,23 @@ public class PaymentService {
         if (session == null) {
             throw new IllegalStateException("세션이 만료되어 결제값을 저장할 수 없습니다.");
         }
-        session.setAttribute(paymentRequestDto.orderId(), paymentRequestDto.amount());
+        session.setAttribute(paymentRequestDto.orderId().toString(), paymentRequestDto.amount());
     }
 
     public void verifyAmount(HttpSession session, PaymentRequestDto paymentRequestDto) {
-        String amount = (String) session.getAttribute(paymentRequestDto.orderId());
+        String amount = (String) session.getAttribute(paymentRequestDto.orderId().toString());
         if (amount == null || !amount.equals(paymentRequestDto.amount())) {
             throw new IllegalArgumentException("결제 금액이 일치하지 않습니다.");
         }
     }
 
-    public TossPayment confirmPayment(PaymentConfirmRequestDto paymentConfirmRequestDto) {
+    public TossPayment confirmPayment(TossPaymentConfirmRequestDto tossPaymentConfirmRequestDto) {
         String authorizations = "Basic " + Base64.getEncoder().encodeToString((SECRET_KEY + ":").getBytes(StandardCharsets.UTF_8));
 
         Map<String, Object> requestMap = Map.of(
-                "orderId", paymentConfirmRequestDto.orderId(),
-                "amount", paymentConfirmRequestDto.amount(),
-                "paymentKey", paymentConfirmRequestDto.paymentKey()
+                "orderId", tossPaymentConfirmRequestDto.orderId(),
+                "amount", tossPaymentConfirmRequestDto.amount(),
+                "paymentKey", tossPaymentConfirmRequestDto.paymentKey()
         );
 
         String requestBody;
@@ -83,9 +80,7 @@ public class PaymentService {
 
     }
 
-    public void savePayment(TossPayment tossPayment) {
-        paymentRepository.save(tossPayment);
-    }
+
 
     /**
      * 결제 취소 요청을 Toss API로 보냄
@@ -121,20 +116,23 @@ public class PaymentService {
 
         return tossPayment;
     }
-
-    /**
-     * DB에서 결제 상태를 업데이트
-     */
-    public TossPayment updatePaymentStatus(TossPayment tossPayment) {
-        if (tossPayment.getPaymentStatus() == PaymentStatus.CANCELED) {
-            throw new IllegalStateException("이미 취소된 결제입니다.");
-        }
-        try {
-            tossPayment.updatePaymentStatus(PaymentStatus.CANCELED);
-            return paymentRepository.save(tossPayment);
-        } catch (DataAccessException e) {
-            throw new DataIntegrityViolationException("DB 단에서 데이터 수정 중 오류가 발생하였습니다.", e);
-        }
-    }
+//
+//    public void savePayment(TossPayment tossPayment) {
+//        paymentRepository.save(tossPayment);
+//    }
+//    /**
+//     * DB에서 결제 상태를 업데이트
+//     */
+//    public TossPayment updatePaymentStatus(TossPayment tossPayment) {
+//        if (tossPayment.getPaymentStatus() == PaymentStatus.CANCELED) {
+//            throw new IllegalStateException("이미 취소된 결제입니다.");
+//        }
+//        try {
+//            tossPayment.updatePaymentStatus(PaymentStatus.CANCELED);
+//            return paymentRepository.save(tossPayment);
+//        } catch (DataAccessException e) {
+//            throw new DataIntegrityViolationException("DB 단에서 데이터 수정 중 오류가 발생하였습니다.", e);
+//        }
+//    }
 
 }

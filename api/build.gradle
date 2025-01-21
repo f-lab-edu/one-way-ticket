@@ -21,6 +21,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'com.mysql:mysql-connector-j:8.3.0'
     implementation 'org.mindrot:jbcrypt:0.4'
+    implementation project(path: ':payment')
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
