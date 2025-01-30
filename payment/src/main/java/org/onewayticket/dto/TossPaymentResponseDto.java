@@ -5,7 +5,6 @@ import org.onewayticket.enums.PaymentMethod;
 import org.onewayticket.enums.PaymentStatus;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -15,7 +14,7 @@ import java.time.LocalDateTime;
  * @param currency 통화
  * @param totalAmount 총 결제액
  */
-public record PaymentResponseDto(
+public record TossPaymentResponseDto(
         String paymentKey,
         String orderId,
         PaymentMethod method,
@@ -24,8 +23,8 @@ public record PaymentResponseDto(
         BigDecimal totalAmount,
         LocalDateTime approvedAt
 ) {
-    public static PaymentResponseDto from(TossPayment tossPayment){
-        return new PaymentResponseDto(
+    public static TossPaymentResponseDto from(TossPayment tossPayment){
+        return new TossPaymentResponseDto(
                 tossPayment.getTossPaymentKey(),
                 tossPayment.getTossOrderId(),
                 tossPayment.getPaymentMethod(),

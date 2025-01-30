@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package com.onewayticket.payment.proto;
+
+option java_multiple_files = true;
+option java_package = "com.onewayticket.payment.proto";
+option java_outer_classname = "PaymentEventsProto";
+
+// 결제 생성 이벤트
+message PaymentCreatedEvent {
+  int64 paymentId = 1;
+  string username = 2;
+  double amount = 3;
+}
+
+// 부정사용자 판정 이벤트
+message FraudCheckedEvent {
+  int64 paymentId = 1;
+  bool isFraud = 2;
+}
+
+// 쿠폰 사용 이벤트
+message CouponUsedEvent {
+  int64 paymentId = 1;
+  bool couponUsed = 2;
+  int32 discountAmount = 3;
+
+}
+
+// 포인트 사용 이벤트
+message PointUsedEvent {
+  int64 paymentId = 1;
+  bool pointUsed = 2;
+  int32 discountAmount = 3;
+}
